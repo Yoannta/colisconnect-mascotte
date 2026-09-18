@@ -100,6 +100,7 @@
       <li>Les temps morts : parfois il ne fait rien pendant plusieurs secondes, puis il repart.</li>
       <li>Le bouton <b>colère</b> : il rougit, fume, jette sa valise — puis il va la rechercher.</li>
       <li>Et au bout d'un moment, il va se poser dans son coin et reste tranquille.</li>
+      <li><b>Appui long (0,4 s) sur le personnage :</b> il se retourne, effrayé, et tu peux le déposer où tu veux dans la page — il râle en atterrissant.</li>
       <li>Sur téléphone : il est plus petit, la bulle reste lisible.</li>
     </ul>
   </div>
@@ -113,6 +114,7 @@
       <button class="dem" id="b-calme" aria-pressed="false">Mode calme</button>
       <button class="dem" id="b-colere">Le faire enrager</button>
       <button class="dem" id="b-pose">Il se pose au coin</button>
+      <button class="dem" id="b-dep">Le déplacer où je veux</button>
       <button class="dem" id="b-chat">Ouvrir le chat (démo)</button>
     </div>
     <p class="etat" id="etat">Animations : <b id="v-anim">normales</b> · Mode calme : <b id="v-calme">non</b></p>
@@ -132,7 +134,7 @@
   </div>
 </div>
 
-<script src="mascotte.js?v=6"></script>
+<script src="mascotte.js?v=9"></script>
 <script>
 (function () {
   var chat = document.getElementById('chat');
@@ -215,6 +217,13 @@
   document.getElementById('b-pose').onclick = function () {
     window.CCMascotte.relancer({ salutation: 'Bonjour ! 👋 Besoin d\u2019un coup de main ?', onChat: ouvrir, delai: 60000, calme: moins });
     setTimeout(function () { window.CCMascotte.poser(); }, 1500);
+  };
+
+  /* placement libre : on l'attrape, il flotte, on le depose, il rale */
+  document.getElementById('b-dep').onclick = function () {
+    window.CCMascotte.relancer({ salutation: 'Bonjour ! 👋 Besoin d\u2019un coup de main ?', onChat: ouvrir, delai: 60000, calme: moins });
+    setTimeout(function () { window.CCMascotte.choper(430, 200); }, 900);
+    setTimeout(function () { window.CCMascotte.placer(820, 380); }, 3000);
   };
 
   document.getElementById('b-chat').onclick = ouvrir;

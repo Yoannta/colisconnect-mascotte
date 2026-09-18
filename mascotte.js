@@ -21,9 +21,100 @@
 (function () {
   'use strict';
 
-  var VERSION   = '2.0.0';
+  var VERSION = '2.1.0';
   var CLE_FERME = 'cc-mascotte-ferme';   // "ne plus afficher" (30 jours)
   var JOURS     = 30;
+
+  /* ---------------------------------------------------- la vue de FACE --- */
+  /* Quand on l'attrape (appui long) pour le deplacer, il se retourne : vue
+     de face, quatre membres visibles, bouche ronde "hooo". Memes couleurs
+     et meme viewBox que la vue de profil.                                    */
+  var FACE = [
+    '<g class="ccm-face-corps">',
+      '<ellipse class="ccm-ombre ccmf-ombre" cx="55" cy="146" rx="27" ry="3.8"/>',
+      '<g class="ccmf-corps">',
+      '<g class="ccmf-tremble">',
+
+        /* jambes pendantes : la claire devant, l'autre derriere */
+        '<g class="ccmf-jambe ccmf-jambe-g">',
+          '<rect class="ccm-pantalon" x="43" y="92" width="10" height="38" rx="5"/>',
+          '<rect class="ccm-chaussure" x="40.5" y="127" width="15" height="8.5" rx="4.2"/>',
+        '</g>',
+        '<g class="ccmf-jambe ccmf-jambe-d ccmf-derriere">',
+          '<rect class="ccm-pantalon" x="57" y="92" width="10" height="38" rx="5"/>',
+          '<rect class="ccm-chaussure" x="55" y="126" width="15" height="8.5" rx="4.2"/>',
+        '</g>',
+
+        /* sac a dos qui depasse des deux epaules */
+        '<rect class="ccm-sac-caisse" x="41" y="48" width="28" height="18" rx="8"/>',
+
+        /* torse et bretelles */
+        '<g class="ccmf-torse">',
+          '<rect class="ccm-veste" x="39" y="58" width="32" height="42" rx="14"/>',
+          '<rect class="ccm-zippe" x="53.5" y="62" width="3" height="34" rx="1.5"/>',
+        '</g>',
+        '<rect class="ccm-sac-bretelle" x="43" y="58" width="5" height="30" rx="2.5" transform="rotate(13 45.5 60)"/>',
+        '<rect class="ccm-sac-bretelle" x="62" y="58" width="5" height="30" rx="2.5" transform="rotate(-13 64.5 60)"/>',
+
+        /* bras arriere : leve, il appelle au secours */
+        '<g transform="rotate(-72 71.5 62)">',
+          '<g class="ccmf-bras ccmf-bras-d ccmf-sombre">',
+            '<rect class="ccm-manche" x="67" y="60" width="9" height="28" rx="4.5"/>',
+            '<circle class="ccm-peau" cx="71.5" cy="88" r="5.2"/>',
+          '</g>',
+        '</g>',
+
+        /* tete de face, effrayee */
+        '<g class="ccmf-tete">',
+          '<circle class="ccm-cou" cx="55" cy="57" r="8"/>',
+          '<circle class="ccm-oreille" cx="35" cy="43" r="4.8"/>',
+          '<circle class="ccm-oreille" cx="75" cy="43" r="4.8"/>',
+          '<circle class="ccm-peau" cx="55" cy="40" r="20"/>',
+          '<path class="ccm-casquette" d="M35,38 A20,20 0 0 1 75,38 Z"/>',
+          '<rect class="ccm-casquette-bande" x="35" y="33.5" width="40" height="4.6" rx="2.3"/>',
+          '<path class="ccm-casquette-visiere" d="M31,37.5 Q55,31 79,37.5 Q55,41.5 31,37.5 Z"/>',
+          '<ellipse class="ccm-joue" cx="40" cy="51.5" rx="3.8" ry="2.4"/>',
+          '<ellipse class="ccm-joue" cx="70" cy="51.5" rx="3.8" ry="2.4"/>',
+          '<path class="ccm-sourcil" d="M40.5,42.5 q5,-3.2 9.8,-1.2"/>',
+          '<path class="ccm-sourcil" d="M59.7,41.3 q4.8,-2 9.8,1.2"/>',
+          '<ellipse class="ccm-oeil" cx="45.6" cy="46.6" rx="3.8" ry="4.6"/>',
+          '<ellipse class="ccm-oeil" cx="64.4" cy="46.6" rx="3.8" ry="4.6"/>',
+          '<circle class="ccm-pupille" cx="46.3" cy="44.7" r="1.4"/>',
+          '<circle class="ccm-pupille" cx="65.1" cy="44.7" r="1.4"/>',
+          '<rect class="ccm-paupiere" x="41.6" y="41.8" width="8" height="9.6" rx="1.2"/>',
+          '<rect class="ccm-paupiere" x="60.4" y="41.8" width="8" height="9.6" rx="1.2"/>',
+          '<ellipse class="ccmf-bouche-ronde" cx="55" cy="53.6" rx="4.6" ry="5.4"/>',
+          '<ellipse class="ccmf-bouche-fond" cx="55" cy="55" rx="2.7" ry="3.1"/>',
+        '</g>',
+
+        /* bras avant : il serre la valise contre lui */
+        '<g class="ccmf-bras ccmf-bras-g">',
+          '<rect class="ccm-manche" x="34" y="60" width="9" height="28" rx="4.5"/>',
+          '<circle class="ccm-peau" cx="38.5" cy="88" r="5.2"/>',
+        '</g>',
+        '<g class="ccmf-valise">',
+          '<rect class="ccm-valise-poignee" x="35.5" y="87" width="6" height="13" rx="3"/>',
+          '<rect class="ccm-valise-barre" x="24" y="95" width="24" height="6" rx="3"/>',
+          '<rect class="ccm-valise-caisse" x="18" y="101" width="27" height="36" rx="7"/>',
+          '<rect class="ccm-valise-sangle" x="18" y="113" width="27" height="11"/>',
+          '<rect class="ccm-valise-loquer" x="27" y="116" width="9" height="4" rx="2"/>',
+          '<circle class="ccm-valise-roue" cx="24" cy="138" r="3.4"/>',
+          '<circle class="ccm-valise-roue" cx="39" cy="138" r="3.4"/>',
+        '</g>',
+
+        /* gouttes de sueur */
+        '<circle class="ccmf-goutte ccmf-goutte-1" cx="80" cy="28" r="2.6"/>',
+        '<circle class="ccmf-goutte ccmf-goutte-2" cx="86" cy="38" r="2.2"/>',
+        '<circle class="ccmf-goutte ccmf-goutte-3" cx="76" cy="18" r="2"/>',
+
+        /* ondes du "hooo" */
+        '<path class="ccmf-arc ccmf-arc-1" d="M63,47 q5,6 .6,15"/>',
+        '<path class="ccmf-arc ccmf-arc-2" d="M47,47 q-5,6 -.6,15"/>',
+
+      '</g>',
+      '</g>',
+    '</g>'
+  ].join('');
 
   /* ------------------------------------------------------- le personnage -- */
   /* Vue de profil, tourne vers la droite. viewBox 110 x 155.
@@ -107,6 +198,9 @@
         '</g>',
 
       '</g>',
+
+      FACE,
+
     '</svg>'
   ].join('');
 
@@ -266,6 +360,62 @@
     '.ccm-root.ccm-pose .ccm-body{animation:ccmRespire 4.4s ease-in-out infinite}',
     '.ccm-root.ccm-pose .ccm-tete{animation:ccmBalance 7.5s ease-in-out infinite}',
 
+    /* --- on l'attrape : il flotte, effraye, vue de FACE ------------------ */
+    '.ccm-svg .ccm-face-corps{opacity:0;pointer-events:none;transition:opacity .16s ease}',
+    '.ccm-root.ccm-flotte .ccm-svg .ccm-face-corps{opacity:1}',
+    '.ccm-svg .ccm-body{transition:opacity .16s ease}',
+    '.ccm-root.ccm-flotte .ccm-svg .ccm-body{opacity:0}',
+    '.ccm-svg .ccmf-derriere .ccm-pantalon{fill:#123743}',
+    '.ccm-svg .ccmf-derriere .ccm-chaussure{fill:#c9d3d8}',
+    '.ccm-svg .ccmf-sombre .ccm-manche{fill:#0b5449}',
+    '.ccm-svg .ccmf-bouche-ronde{fill:#8d1f16}',
+    '.ccm-svg .ccmf-bouche-fond{fill:#5a0d08}',
+    '.ccm-svg .ccmf-goutte{fill:#8fd8ea;opacity:.9}',
+    '.ccm-svg .ccmf-arc{fill:none;stroke:#bfeee6;stroke-width:1.6;opacity:0}',
+    '.ccm-svg .ccmf-jambe,.ccm-svg .ccmf-bras,.ccm-svg .ccmf-tete,.ccm-svg .ccmf-valise,',
+    '.ccm-svg .ccmf-ombre,.ccm-svg .ccmf-bouche-ronde,.ccm-svg .ccmf-goutte,.ccm-svg .ccmf-arc{transform-box:fill-box}',
+    '.ccm-svg .ccmf-jambe{transform-origin:50% 3%}',
+    '.ccm-svg .ccmf-bras{transform-origin:50% 5%}',
+    '.ccm-svg .ccmf-tete{transform-origin:50% 92%}',
+    '.ccm-svg .ccmf-valise{transform-origin:88% 2%}',
+    '.ccm-svg .ccmf-ombre,.ccm-svg .ccmf-bouche-ronde,.ccm-svg .ccmf-goutte,.ccm-svg .ccmf-arc{transform-origin:50% 50%}',
+    '.ccm-root.ccm-flotte .ccmf-corps{animation:ccmFuitFlotte 1.5s ease-in-out infinite}',
+    '.ccm-root.ccm-flotte .ccmf-tremble{animation:ccmFuitTremble .1s linear infinite}',
+    '.ccm-root.ccm-flotte .ccmf-tete{animation:ccmFuitTete 1.05s ease-in-out infinite}',
+    '.ccm-root.ccm-flotte .ccmf-bras-d{animation:ccmFuitBras .42s ease-in-out infinite alternate}',
+    '.ccm-root.ccm-flotte .ccmf-jambe-g{animation:ccmFuitJambe .62s ease-in-out infinite alternate}',
+    '.ccm-root.ccm-flotte .ccmf-jambe-d{animation:ccmFuitJambeB .58s ease-in-out infinite alternate}',
+    '.ccm-root.ccm-flotte .ccmf-valise{animation:ccmFuitValise .74s ease-in-out infinite alternate}',
+    '.ccm-root.ccm-flotte .ccmf-ombre{animation:ccmFuitOmbre 1.5s ease-in-out infinite}',
+    '.ccm-root.ccm-flotte .ccmf-bouche-ronde{animation:ccmFuitBouche .66s ease-in-out infinite}',
+    '.ccm-root.ccm-flotte .ccmf-goutte{animation:ccmFuitGoutte 1.3s ease-in-out infinite}',
+    '.ccm-root.ccm-flotte .ccmf-goutte-2{animation-delay:.45s}',
+    '.ccm-root.ccm-flotte .ccmf-goutte-3{animation-delay:.9s}',
+    '.ccm-root.ccm-flotte .ccmf-arc{animation:ccmFuitArc 1.05s ease-out infinite}',
+    '.ccm-root.ccm-flotte .ccmf-arc-2{animation-delay:.4s}',
+
+    /* --- on le tient, puis on le depose ou l'on veut dans la page -------- */
+    '.ccm-perso{touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}',
+    '.ccm-perso.ccm-saisi{cursor:grabbing}',
+    '.ccm-perso.ccm-libre{position:fixed;bottom:auto}',
+    '.ccm-perso.ccm-bulle-bas .ccm-bulle{top:calc(100% - 6px);bottom:auto;transform:translate(-50%,-8px)}',
+    '.ccm-root.ccm-parle .ccm-perso.ccm-bulle-bas .ccm-bulle{transform:translate(-50%,0)}',
+    '.ccm-perso.ccm-bulle-bas .ccm-bulle:after{top:-7px;bottom:auto;transform:translateX(-50%) rotate(225deg)}',
+    '.ccm-perso.ccm-bulle-bas .ccm-colere{top:calc(100% - 4px);bottom:auto}',
+
+    /* --- les mouvements de la vue de face ------------------------------- */
+    '@keyframes ccmFuitFlotte{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}',
+    '@keyframes ccmFuitTremble{0%,100%{transform:translate(.9px,0)}50%{transform:translate(-.9px,0)}}',
+    '@keyframes ccmFuitTete{0%,100%{transform:rotate(-4.5deg)}50%{transform:rotate(4.5deg)}}',
+    '@keyframes ccmFuitBras{0%{transform:rotate(-6deg)}100%{transform:rotate(9deg)}}',
+    '@keyframes ccmFuitJambe{0%{transform:rotate(-13deg)}100%{transform:rotate(11deg)}}',
+    '@keyframes ccmFuitJambeB{0%{transform:rotate(11deg)}100%{transform:rotate(-13deg)}}',
+    '@keyframes ccmFuitValise{0%{transform:rotate(-2.5deg)}100%{transform:rotate(2.5deg)}}',
+    '@keyframes ccmFuitOmbre{0%,100%{transform:scale(1);opacity:.3}50%{transform:scale(.76);opacity:.15}}',
+    '@keyframes ccmFuitBouche{0%,100%{transform:scale(1,1)}50%{transform:scale(1.14,1.26)}}',
+    '@keyframes ccmFuitGoutte{0%{transform:translate(0,0) scale(.5);opacity:0}30%{opacity:.9}100%{transform:translate(5px,-22px) scale(1);opacity:0}}',
+    '@keyframes ccmFuitArc{0%{transform:scale(.4);opacity:.85}100%{transform:scale(1.6);opacity:0}}',
+
     /* petits ecrans */
     '@media (max-width:620px){.ccm-root{height:152px}.ccm-perso{width:88px;height:124px;bottom:6px}}',
     '@media (max-width:620px){.ccm-bulle{font-size:13px;max-width:70vw}}',
@@ -375,7 +525,8 @@
     var x = 0, largeur = 110, marge = 14, cible = 0, depart = 0, t0 = 0, duree = 0, raf = null, enMarche = false;
     var arret = false;                       // l'automate reprend la main
     var occupe = false;                      // une scene est en cours (salut, colere...)
-    var pose   = false;                      // il s'est pose dans son coin : fini de marcher
+    var pose   = false;
+    var detache = false;                     // on l'a depose quelque part : il reste la                      // il s'est pose dans son coin : fini de marcher
     var minuteurRepos = null, minuteurPose = null;
     var ancre, colere, compense = false, xRef = 0;
 
@@ -405,6 +556,8 @@
       if (gauche < g) dx = g - gauche;
       else if (gauche + w > vw - g) dx = (vw - g) - (gauche + w);
       el.style.marginLeft = dx ? Math.round(dx) + 'px' : '';
+      /* colle en haut de l'ecran : la bulle passe sous le personnage */
+      perso.classList.toggle('ccm-bulle-bas', perso.getBoundingClientRect().top < 150);
     }
 
     /* il la ramasse : elle revient doucement dans sa main */
@@ -466,6 +619,10 @@
       minuteurRepos = setTimeout(function () {
         if (!libre()) return;
         var b = bornes(), r = Math.random();
+        if (detache) {                              // depose dans la page : il reste ou on l'a mis
+          if (r < 0.5) regarde(); else reflechit();
+          return;
+        }
         if (r < 0.22) regarde();                                    // il regarde autour de lui
         else if (r < 0.36) reflechit();                             // il reflechit un instant
         else marcheVers(b.min + Math.random() * (b.max - b.min));    // il repart
@@ -580,7 +737,7 @@
 
     /* --- apres un moment, il va se poser dans son coin ---------------- */
     function sePoser() {
-      if (arret || occupe || pose) return;
+      if (arret || occupe || pose || detache) return;
       pose = true;
       var b = bornes();
       if (Math.abs(x - b.min) < 12) { stopper(); etat('ccm-pose'); return; }
@@ -611,7 +768,7 @@
       setTimeout(function () { if (root.parentNode) root.parentNode.removeChild(root); }, 700);
     }
 
-    perso.addEventListener('click', ouvrirChat);
+    perso.addEventListener('click', auClic);
     perso.addEventListener('keydown', function (e) {
       if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); ouvrirChat(); }
     });
@@ -620,6 +777,97 @@
 
     /* le clic sur la bulle ne doit pas etre avale par le personnage */
     perso.querySelector('.ccm-bulle').addEventListener('click', function (e) { e.stopPropagation(); });
+
+    /* --- appui long : on l'attrape, il flotte (vue de face, effraye) et on
+           le depose ou l'on veut dans la page. A l'atterrissage, il rale. -- */
+    var saisi = false, timerAppui = null, clicJuste = false;   // (detache vit plus haut)
+    var appuiX = 0, appuiY = 0, decX = 0, decY = 0;
+
+    function dansLaFenetre(v, a, b) { return v < a ? a : (v > b ? b : v); }
+
+    function saisir(px, py, idPointeur) {
+      if (arret) return false;
+      arret = true;                            // fige la scene en cours : on le tient
+      saisi = true; occupe = true; pose = false; compense = false;
+      if (minuteurSalut) clearTimeout(minuteurSalut);
+      if (minuteurRepos) clearTimeout(minuteurRepos);
+      if (minuteurPose)  clearTimeout(minuteurPose);
+      stopper();
+      root.classList.remove('ccm-parle', 'ccm-salue');
+      var r = perso.getBoundingClientRect();
+      decX = px - r.left;
+      decY = py - r.top;
+      perso.classList.add('ccm-libre', 'ccm-saisi');
+      perso.style.left = Math.round(r.left) + 'px';
+      perso.style.top  = Math.round(r.top)  + 'px';
+      x = r.left;
+      detache = true;
+      perso.classList.remove('ccm-vers-gauche');        // vue de face : plus de miroir
+      root.classList.add('ccm-flotte');                 // il flotte, effraye
+      etat('');
+      if (ancre && ancre.style) ancre.style.transform = '';
+      try { if (perso.setPointerCapture && idPointeur != null) perso.setPointerCapture(idPointeur); }
+      catch (err) {}
+      return true;
+    }
+
+    function suivre(px, py) {
+      var l = perso.offsetWidth || 110, h = perso.offsetHeight || 155;
+      var nl = dansLaFenetre(px - decX, 2, Math.max(2, window.innerWidth  - l - 2));
+      var nt = dansLaFenetre(py - decY, 2, Math.max(2, window.innerHeight - h - 2));
+      perso.style.left = Math.round(nl) + 'px';
+      perso.style.top  = Math.round(nt) + 'px';
+      x = nl;
+    }
+
+    function relacher() {
+      if (!saisi) return false;
+      arret = false;                           // les scenes peuvent reprendre
+      saisi = false; occupe = false;
+      perso.classList.remove('ccm-saisi');
+      root.classList.remove('ccm-flotte');
+      clicJuste = true;                                        // ce clic n'ouvre pas le chat
+      setTimeout(function () { clicJuste = false; }, 480);
+      enrager();                                           // il n'aime pas du tout etre attrape
+      return true;
+    }
+
+    function choper(px, py) {
+      var l = perso.offsetWidth || 110, h = perso.offsetHeight || 155;
+      if (!saisir(px, py, null)) return false;
+      decX = l / 2; decY = h / 2;                              // il se centre sur le doigt
+      suivre(px, py);
+      return true;
+    }
+
+    function placer(px, py) { if (!choper(px, py)) return false; return relacher(); }
+
+    function annulerAppui() { if (timerAppui) { clearTimeout(timerAppui); timerAppui = null; } }
+    function auClic() { if (clicJuste || saisi) return; ouvrirChat(); }
+
+    perso.addEventListener('pointerdown', function (e) {
+      if (arret) return;
+      if (e.button && e.button !== 0) return;                  // bouton droit : on laisse passer
+      appuiX = e.clientX; appuiY = e.clientY; clicJuste = false;
+      annulerAppui();
+      timerAppui = setTimeout(function () {                    // appui long = 0,42 s
+        timerAppui = null;
+        saisir(appuiX, appuiY, e.pointerId);
+      }, 420);
+    });
+
+    perso.addEventListener('pointermove', function (e) {
+      if (!timerAppui) return;
+      if (Math.abs(e.clientX - appuiX) > 10 || Math.abs(e.clientY - appuiY) > 10) annulerAppui();
+    });
+
+    perso.addEventListener('pointerup', annulerAppui);
+    perso.addEventListener('pointercancel', annulerAppui);
+    perso.addEventListener('contextmenu', function (e) { if (saisi) e.preventDefault(); });
+
+    document.addEventListener('pointermove', function (e) { if (saisi) suivre(e.clientX, e.clientY); });
+    document.addEventListener('pointerup', function () { if (saisi) relacher(); });
+    document.addEventListener('pointercancel', function () { if (saisi) relacher(); });
 
     /* --- mise en route ------------------------------------------------ */
     var minuteurSalut = null;
@@ -666,6 +914,9 @@
       saluer: saluer,
       enrager: enrager,
       poser: sePoser,
+      choper: choper,
+      relacher: relacher,
+      placer: placer,
       ranger: ranger,
       figer: function (v) {
         root.classList.toggle('ccm-fige', v !== false);
@@ -698,6 +949,9 @@
     ranger: function () { if (courant) courant.ranger(); },
     enrager: function () { return courant ? courant.enrager() : false; },
     poser: function () { if (courant) courant.poser(); },
+    choper: function (x, y) { return courant ? courant.choper(x, y) : false; },
+    relacher: function () { return courant ? courant.relacher() : false; },
+    placer: function (x, y) { return courant ? courant.placer(x, y) : false; },
     monte: function () { return !!courant; }
   };
 
