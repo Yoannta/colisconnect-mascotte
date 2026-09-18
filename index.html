@@ -101,6 +101,7 @@
       <li>Le bouton <b>colère</b> : il rougit, fume, jette sa valise — puis il va la rechercher.</li>
       <li>Et au bout d'un moment, il va se poser dans son coin et reste tranquille.</li>
       <li><b>Appui long (0,4 s) sur le personnage :</b> il se retourne, effrayé, et tu peux le déposer où tu veux dans la page — il râle en atterrissant.</li>
+      <li><b>Lance-le vraiment</b> (geste vif, relâché d'un coup) : il tombe, se relève, les poings sur les hanches, et demande « Tu veux que je parte ? ». Une seule fois toutes les 12 heures. Le bouton <b>Le grand départ</b> permet de le revoir tout de suite.</li>
       <li>Sur téléphone : il est plus petit, la bulle reste lisible.</li>
     </ul>
   </div>
@@ -115,6 +116,7 @@
       <button class="dem" id="b-colere">Le faire enrager</button>
       <button class="dem" id="b-pose">Il se pose au coin</button>
       <button class="dem" id="b-dep">Le déplacer où je veux</button>
+      <button class="dem" id="b-jet">Le grand départ (démo)</button>
       <button class="dem" id="b-chat">Ouvrir le chat (démo)</button>
     </div>
     <p class="etat" id="etat">Animations : <b id="v-anim">normales</b> · Mode calme : <b id="v-calme">non</b></p>
@@ -134,7 +136,7 @@
   </div>
 </div>
 
-<script src="mascotte.js?v=9"></script>
+<script src="mascotte.js?v=10"></script>
 <script>
 (function () {
   var chat = document.getElementById('chat');
@@ -227,6 +229,13 @@
   };
 
   document.getElementById('b-chat').onclick = ouvrir;
+
+  /* le grand depart : on peut le rejouer autant de fois qu'on veut */
+  document.getElementById('b-jet').onclick = function () {
+    if (window.CCMascotte.jet(true)) return;
+    window.CCMascotte.relancer({ salutation: 'Bonjour ! 👋 Besoin d\u2019un coup de main ?', onChat: ouvrir, delai: 60000, calme: moins });
+    setTimeout(function () { window.CCMascotte.jet(true); }, 1500);
+  };
 })();
 </script>
 </body>

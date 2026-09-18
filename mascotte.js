@@ -21,9 +21,12 @@
 (function () {
   'use strict';
 
-  var VERSION = '2.1.0';
+  var VERSION = '2.2.0';
   var CLE_FERME = 'cc-mascotte-ferme';   // "ne plus afficher" (30 jours)
   var JOURS     = 30;
+  var CLE_JET   = 'cc-mascotte-jet';     // la scene du jet : une seule fois / 12 h
+  var REPOS_JET = 12 * 3600 * 1000;
+  var VITESSE_JET = 1.2;                 // px/ms : au-dela, c'est un vrai lancer
 
   /* ---------------------------------------------------- la vue de FACE --- */
   /* Quand on l'attrape (appui long) pour le deplacer, il se retourne : vue
@@ -56,6 +59,17 @@
         '<rect class="ccm-sac-bretelle" x="43" y="58" width="5" height="30" rx="2.5" transform="rotate(13 45.5 60)"/>',
         '<rect class="ccm-sac-bretelle" x="62" y="58" width="5" height="30" rx="2.5" transform="rotate(-13 64.5 60)"/>',
 
+        /* mains sur les hanches : deux bras plies, invisibles d'habitude.
+           C'est la pose de la scene du jet (il te demande s'il doit partir). */
+        '<g class="ccmf-hanches-d ccmf-sombre">',
+          '<path class="ccmf-akimbo" d="M71.5,63.5 L81,79.5 L69,86.5"/>',
+          '<circle class="ccm-peau" cx="69" cy="86.5" r="4.8"/>',
+        '</g>',
+        '<g class="ccmf-hanches-g">',
+          '<path class="ccmf-akimbo" d="M38.5,63.5 L29,79.5 L41,86.5"/>',
+          '<circle class="ccm-peau" cx="41" cy="86.5" r="4.8"/>',
+        '</g>',
+
         /* bras arriere : leve, il appelle au secours */
         '<g transform="rotate(-72 71.5 62)">',
           '<g class="ccmf-bras ccmf-bras-d ccmf-sombre">',
@@ -75,16 +89,23 @@
           '<path class="ccm-casquette-visiere" d="M31,37.5 Q55,31 79,37.5 Q55,41.5 31,37.5 Z"/>',
           '<ellipse class="ccm-joue" cx="40" cy="51.5" rx="3.8" ry="2.4"/>',
           '<ellipse class="ccm-joue" cx="70" cy="51.5" rx="3.8" ry="2.4"/>',
-          '<path class="ccm-sourcil" d="M40.5,42.5 q5,-3.2 9.8,-1.2"/>',
-          '<path class="ccm-sourcil" d="M59.7,41.3 q4.8,-2 9.8,1.2"/>',
-          '<ellipse class="ccm-oeil" cx="45.6" cy="46.6" rx="3.8" ry="4.6"/>',
-          '<ellipse class="ccm-oeil" cx="64.4" cy="46.6" rx="3.8" ry="4.6"/>',
-          '<circle class="ccm-pupille" cx="46.3" cy="44.7" r="1.4"/>',
-          '<circle class="ccm-pupille" cx="65.1" cy="44.7" r="1.4"/>',
-          '<rect class="ccm-paupiere" x="41.6" y="41.8" width="8" height="9.6" rx="1.2"/>',
-          '<rect class="ccm-paupiere" x="60.4" y="41.8" width="8" height="9.6" rx="1.2"/>',
+          '<path class="ccm-sourcil ccmf-crainte" d="M40.5,42.5 q5,-3.2 9.8,-1.2"/>',
+          '<path class="ccm-sourcil ccmf-crainte" d="M59.7,41.3 q4.8,-2 9.8,1.2"/>',
+          /* sourcils "faches" : seulement quand il fait la tete (scene du jet) */
+          '<path class="ccm-sourcil ccmf-fache" d="M40.6,41 q5.4,1.9 9.7,1.7"/>',
+          '<path class="ccm-sourcil ccmf-fache" d="M59.7,42.7 q4.3,-1.8 9.7,-1.7"/>',
+          /* les yeux sont groupes : ils montent et descendent (il te devisage) */
+          '<g class="ccmf-yeux">',
+            '<ellipse class="ccm-oeil" cx="45.6" cy="46.6" rx="3.8" ry="4.6"/>',
+            '<ellipse class="ccm-oeil" cx="64.4" cy="46.6" rx="3.8" ry="4.6"/>',
+            '<circle class="ccm-pupille" cx="46.3" cy="44.7" r="1.4"/>',
+            '<circle class="ccm-pupille" cx="65.1" cy="44.7" r="1.4"/>',
+            '<rect class="ccm-paupiere" x="41.6" y="41.8" width="8" height="9.6" rx="1.2"/>',
+            '<rect class="ccm-paupiere" x="60.4" y="41.8" width="8" height="9.6" rx="1.2"/>',
+          '</g>',
           '<ellipse class="ccmf-bouche-ronde" cx="55" cy="53.6" rx="4.6" ry="5.4"/>',
           '<ellipse class="ccmf-bouche-fond" cx="55" cy="55" rx="2.7" ry="3.1"/>',
+          '<path class="ccmf-bouche-fache" d="M47.3,56.9 q7.7,-5.7 15.4,0"/>',
         '</g>',
 
         /* bras avant : il serre la valise contre lui */
@@ -220,6 +241,39 @@
         '<path class="ccm-colere-etoile" d="' + etoile(50, 50, 50, 33, 13) + '"/>',
       '</svg>',
       '<span class="ccm-colere-txt">&amp;@#%*! &sect;%?&amp;! #@*!&amp;%</span>',
+    '</div>'
+  ].join('');
+
+  /* la question du grand depart : il te demande s'il doit partir */
+  var ASK = [
+    '<div class="ccm-ask" role="dialog" aria-label="Le guide demande s\'il doit partir">',
+      '<p class="ccm-ask-txt">Tu veux que je parte&nbsp;?</p>',
+      '<div class="ccm-ask-btns">',
+        '<button class="ccm-ask-btn ccm-ask-oui" type="button">Oui</button>',
+        '<button class="ccm-ask-btn ccm-ask-non" type="button">Non</button>',
+      '</div>',
+    '</div>'
+  ].join('');
+
+  /* la porte : elle n'apparait que s'il decide de partir.
+     Deux morceaux exprès : le fond (le trou sombre + l'encadrement) reste
+     DERRIERE le personnage, le battant passe DEVANT lui (c'est lui qui claque).
+     Le battant s'ouvre en s'ecrasant vers la charniere (droite), comme une
+     porte qui pivote : on voit le trou sombre a la place du panneau. */
+  var PORTE = [
+    '<div class="ccm-porte" aria-hidden="true">',
+      '<svg class="ccm-porte-svg ccm-porte-fond" viewBox="0 0 96 168" xmlns="http://www.w3.org/2000/svg" focusable="false">',
+        '<rect class="ccm-porte-trou" x="8" y="7" width="80" height="156" rx="3"/>',
+        '<rect class="ccm-porte-cadre" x="8" y="7" width="80" height="156" rx="3"/>',
+      '</svg>',
+      '<svg class="ccm-porte-svg ccm-porte-battant-svg" viewBox="0 0 96 168" xmlns="http://www.w3.org/2000/svg" focusable="false">',
+        '<g class="ccm-porte-battant">',
+          '<rect class="ccm-porte-bois" x="8" y="7" width="80" height="156" rx="3"/>',
+          '<rect class="ccm-porte-creux" x="16" y="16" width="64" height="52" rx="2"/>',
+          '<rect class="ccm-porte-creux" x="16" y="78" width="64" height="74" rx="2"/>',
+          '<circle class="ccm-porte-bouton" cx="78" cy="88" r="4.2"/>',
+        '</g>',
+      '</svg>',
     '</div>'
   ].join('');
 
@@ -362,9 +416,9 @@
 
     /* --- on l'attrape : il flotte, effraye, vue de FACE ------------------ */
     '.ccm-svg .ccm-face-corps{opacity:0;pointer-events:none;transition:opacity .16s ease}',
-    '.ccm-root.ccm-flotte .ccm-svg .ccm-face-corps{opacity:1}',
+    '.ccm-root.ccm-flotte .ccm-svg .ccm-face-corps,.ccm-root.ccm-face .ccm-svg .ccm-face-corps{opacity:1}',
     '.ccm-svg .ccm-body{transition:opacity .16s ease}',
-    '.ccm-root.ccm-flotte .ccm-svg .ccm-body{opacity:0}',
+    '.ccm-root.ccm-flotte .ccm-svg .ccm-body,.ccm-root.ccm-face .ccm-svg .ccm-body{opacity:0}',
     '.ccm-svg .ccmf-derriere .ccm-pantalon{fill:#123743}',
     '.ccm-svg .ccmf-derriere .ccm-chaussure{fill:#c9d3d8}',
     '.ccm-svg .ccmf-sombre .ccm-manche{fill:#0b5449}',
@@ -415,6 +469,90 @@
     '@keyframes ccmFuitBouche{0%,100%{transform:scale(1,1)}50%{transform:scale(1.14,1.26)}}',
     '@keyframes ccmFuitGoutte{0%{transform:translate(0,0) scale(.5);opacity:0}30%{opacity:.9}100%{transform:translate(5px,-22px) scale(1);opacity:0}}',
     '@keyframes ccmFuitArc{0%{transform:scale(.4);opacity:.85}100%{transform:scale(1.6);opacity:0}}',
+
+    /* ===== la scene du jet : il tombe, il demande, il part =============== */
+    /* la vue de face, mais calme : sans la panique de la fuite */
+    '.ccm-root.ccm-face .ccm-svg .ccm-face-corps{opacity:1}',
+    '.ccm-root.ccm-face .ccm-svg .ccm-body{opacity:0}',
+    /* son visage fache : sourcils fronces et bouche en coin */
+    '.ccm-svg .ccmf-fache{opacity:0;transition:opacity .2s ease}',
+    '.ccm-svg .ccmf-bouche-fache{opacity:0;fill:none;stroke:#a4553c;stroke-width:2;stroke-linecap:round}',
+    /* les bras plies : invisibles d'habitude */
+    '.ccm-svg .ccmf-hanches-g,.ccm-svg .ccmf-hanches-d{opacity:0;transition:opacity .2s ease}',
+    '.ccm-svg .ccmf-akimbo{fill:none;stroke:#128a76;stroke-width:8.4;stroke-linecap:round;stroke-linejoin:round}',
+    '.ccm-svg .ccmf-sombre .ccmf-akimbo{stroke:#0b5449}',
+    /* la pose : les poings sur les hanches, plus de sueur, plus de "hooo" */
+    '.ccm-root.ccm-hanches .ccmf-crainte{opacity:0}',
+    '.ccm-root.ccm-hanches .ccmf-fache{opacity:1}',
+    '.ccm-root.ccm-hanches .ccmf-bouche-fache{opacity:1}',
+    '.ccm-root.ccm-hanches .ccmf-bouche-ronde,.ccm-root.ccm-hanches .ccmf-bouche-fond{opacity:0}',
+    '.ccm-root.ccm-hanches .ccmf-goutte,.ccm-root.ccm-hanches .ccmf-arc{display:none}',
+    '.ccm-root.ccm-hanches .ccmf-hanches-g,.ccm-root.ccm-hanches .ccmf-hanches-d{opacity:1}',
+    '.ccm-root.ccm-hanches .ccmf-bras-g,.ccm-root.ccm-hanches .ccmf-bras-d{opacity:0}',
+    /* il te devisage : les yeux montent et descendent */
+    '.ccm-svg .ccmf-yeux{transition:transform .17s ease}',
+    '.ccm-root.ccm-regard-haut .ccmf-tete{transform:translateY(-1.8px)}',
+    '.ccm-root.ccm-regard-bas .ccmf-tete{transform:translateY(2.3px)}',
+    '.ccm-root.ccm-regard-haut .ccmf-yeux{transform:translateY(-2.3px)}',
+    '.ccm-root.ccm-regard-bas .ccmf-yeux{transform:translateY(2.7px)}',
+    /* il tombe : il bascule sur le cote... */
+    '.ccm-root.ccm-tombe-d .ccm-svg{transform:rotate(78deg);transition:transform .3s cubic-bezier(.5,0,.9,.42)}',
+    '.ccm-root.ccm-tombe-g .ccm-svg{transform:rotate(-78deg);transition:transform .3s cubic-bezier(.5,0,.9,.42)}',
+    /* ... puis il se releve, un peu vexe */
+    '.ccm-root.ccm-releve-d .ccm-svg{animation:ccmReleveD .72s cubic-bezier(.3,1.15,.4,1)}',
+    '.ccm-root.ccm-releve-g .ccm-svg{animation:ccmReleveG .72s cubic-bezier(.3,1.15,.4,1)}',
+    /* sa valise, posee au sol pendant qu'il a les poings sur les hanches */
+    '.ccm-svg .ccmf-valise{transition:transform .4s ease}',
+    '.ccm-root.ccm-valise-sol .ccmf-valise{transform:translate(-1px,1.5px) rotate(-5deg)}',
+    /* il boude : la tete rentre dans les epaules */
+    '.ccm-root.ccm-boude .ccm-tete{transform:translateY(3.4px) rotate(3deg)}',
+    '.ccm-root.ccm-boude .ccm-bras-av{animation:ccmBoudeBras 1.6s ease-in-out infinite alternate}',
+    /* la question "tu veux que je parte ?" */
+    '.ccm-ask{position:absolute;left:50%;bottom:calc(100% - 4px);transform:translate(-50%,8px) scale(.92);',
+      'width:max-content;max-width:min(76vw,240px);background:#0b1116;color:#eef7f5;',
+      'border:1px solid rgba(19,236,200,.32);border-radius:16px;padding:11px 14px;text-align:center;',
+      'font:600 13.5px/1.35 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;',
+      'box-shadow:0 12px 34px rgba(0,0,0,.5);opacity:0;pointer-events:none;z-index:4;',
+      'transition:opacity .24s ease,transform .24s ease}',
+    '.ccm-root.ccm-demande .ccm-ask{opacity:1;transform:translate(-50%,0) scale(1);pointer-events:auto}',
+    '.ccm-ask:after{content:"";position:absolute;left:50%;bottom:-7px;width:12px;height:12px;',
+      'background:#0b1116;border-right:1px solid rgba(19,236,200,.32);',
+      'border-bottom:1px solid rgba(19,236,200,.32);transform:translateX(-50%) rotate(45deg)}',
+    '.ccm-ask-txt{margin:0 0 10px;display:block}',
+    '.ccm-ask-btns{display:flex;gap:8px;justify-content:center}',
+    '.ccm-ask-btn{border:0;border-radius:999px;padding:7px 16px;font:700 12.5px/1 inherit;cursor:pointer}',
+    '.ccm-ask-oui{background:var(--primary,#13ecc8);color:#04201c}',
+    '.ccm-ask-non{background:rgba(238,247,245,.14);color:#eef7f5}',
+    '.ccm-ask-btn:hover{filter:brightness(1.08)}',
+    '.ccm-perso.ccm-bulle-bas .ccm-ask{top:calc(100% - 6px);bottom:auto;transform:translate(-50%,-8px) scale(.92)}',
+    '.ccm-root.ccm-demande .ccm-perso.ccm-bulle-bas .ccm-ask{transform:translate(-50%,0) scale(1)}',
+    '.ccm-perso.ccm-bulle-bas .ccm-ask:after{top:-7px;bottom:auto;transform:translateX(-50%) rotate(225deg)}',
+    /* la porte : le fond reste derriere lui, le battant passe devant */
+    '.ccm-porte-svg{position:fixed;display:block;opacity:0;transform:translateY(6px) scale(.72);',
+      'transform-origin:50% 100%;transition:opacity .3s ease,transform .32s cubic-bezier(.2,1.1,.4,1)}',
+    '.ccm-porte.ccm-porte-pose .ccm-porte-svg{opacity:1;transform:none}',
+    '.ccm-porte-mi .ccm-porte-svg{transform:translateY(6px) scale(.72) scaleX(-1)}',
+    '.ccm-porte-mi.ccm-porte-pose .ccm-porte-svg{transform:scaleX(-1)}',
+    '.ccm-porte-fond{z-index:-1}',
+    '.ccm-porte-battant-svg{z-index:1}',
+    '.ccm-porte-trou{fill:#101b1f}',
+    '.ccm-porte-cadre{fill:none;stroke:#5d6b73;stroke-width:6}',
+    '.ccm-porte-bois{fill:#12826e}',
+    '.ccm-porte-creux{fill:#0c5b4d}',
+    '.ccm-porte-bouton{fill:#f0c04a}',
+    '.ccm-porte-battant{transform-box:fill-box;transform-origin:100% 50%;',
+      'transition:transform .46s cubic-bezier(.35,0,.2,1)}',
+    '.ccm-porte.ouvre .ccm-porte-battant{transform:scaleX(.07)}',
+    '.ccm-porte.claque .ccm-porte-battant{animation:ccmClaque .34s cubic-bezier(.2,.9,.3,1)}',
+    '.ccm-porte.claque .ccm-porte-fond{animation:ccmSecoue .34s ease-out}',
+    /* il pousse la porte de la main */
+    '.ccm-root.ccm-pousse .ccm-bras-av{animation:ccmPousse .7s ease-in-out}',
+    '@keyframes ccmReleveD{0%{transform:rotate(78deg)}46%{transform:rotate(-11deg)}70%{transform:rotate(6deg)}100%{transform:rotate(0)}}',
+    '@keyframes ccmReleveG{0%{transform:rotate(-78deg)}46%{transform:rotate(11deg)}70%{transform:rotate(-6deg)}100%{transform:rotate(0)}}',
+    '@keyframes ccmClaque{0%{transform:scaleX(.07)}72%{transform:scaleX(1.04)}100%{transform:scaleX(1)}}',
+    '@keyframes ccmSecoue{0%,100%{transform:translate(0,0)}25%{transform:translate(2.5px,0)}60%{transform:translate(-1.6px,0)}}',
+    '@keyframes ccmPousse{0%{transform:rotate(0)}30%{transform:rotate(-72deg)}62%{transform:rotate(-64deg)}100%{transform:rotate(0)}}',
+    '@keyframes ccmBoudeBras{0%{transform:rotate(2deg)}100%{transform:rotate(-3.5deg)}}',
 
     /* petits ecrans */
     '@media (max-width:620px){.ccm-root{height:152px}.ccm-perso{width:88px;height:124px;bottom:6px}}',
@@ -483,6 +621,11 @@
     try { localStorage.removeItem(CLE_FERME); } catch (e) {}
   }
 
+  /* on efface le compteur du jet : la scene pourra se rejouer tout de suite */
+  function oublierJet() {
+    try { localStorage.removeItem(CLE_JET); } catch (e) {}
+  }
+
   /* ------------------------------------------------------------- la vie ---- */
   function demarrer(o) {
     if (estFerme()) return null;
@@ -502,9 +645,10 @@
     perso.setAttribute('role', 'button');
     perso.setAttribute('tabindex', '0');
     perso.setAttribute('aria-label', 'Le petit voyageur ColisConnect : demander de l\u2019aide');
-    perso.innerHTML = SVG + BULLE + COLERE;
+    perso.innerHTML = SVG + BULLE + COLERE + ASK;
     ancre = perso.querySelector('.ccm-valise-ancre');
     colere = perso.querySelector('.ccm-colere');
+    askEl = perso.querySelector('.ccm-ask');
 
     root.appendChild(perso);
     document.body.appendChild(root);
@@ -528,7 +672,9 @@
     var pose   = false;
     var detache = false;                     // on l'a depose quelque part : il reste la                      // il s'est pose dans son coin : fini de marcher
     var minuteurRepos = null, minuteurPose = null;
-    var ancre, colere, compense = false, xRef = 0;
+    var ancre, colere, askEl, compense = false, xRef = 0;
+    var porte = null, apresMarche = null, minuteursScene = [], jetEchantillons = [], reponseDonnee = false;
+    var porteCible = 0, porteSens = 1;
 
     function bornes() {
       largeur = perso.offsetWidth || 110;
@@ -578,13 +724,14 @@
       else perso.classList.remove('ccm-vers-gauche');
     }
 
-    function marcheVers(cible2, rapidite) {
+    function marcheVers(cible2, rapidite, fin) {
       var b = bornes();
       cible = Math.min(b.max, Math.max(b.min, cible2));
       var sens = cible > x ? 1 : -1;
       tournerVers(sens);
       depart = x; t0 = 0; duree = Math.max(360, Math.abs(cible - x) / (vitesse * (rapidite || 1)) * 1000);
       enMarche = true;
+      apresMarche = fin || null;               // ce qu'on enchainera en arrivant
       etat('ccm-marche');
       raf = requestAnimationFrame(avance);
     }
@@ -596,11 +743,16 @@
       poser(depart + (cible - depart) * p);
       if (compense) majAncre();
       if (p < 1) raf = requestAnimationFrame(avance);
-      else { enMarche = false; etat('ccm-repos'); repos(); }
+      else {
+        enMarche = false;
+        if (apresMarche) { var f = apresMarche; apresMarche = null; f(); }
+        else { etat('ccm-repos'); repos(); }
+      }
     }
 
     function stopper() {
       enMarche = false;
+      apresMarche = null;
       if (raf) cancelAnimationFrame(raf);
       raf = null;
       if (compense) {
@@ -751,6 +903,256 @@
       }, d + 320);
     }
 
+    /* ------------------------------------------------- la scene du jet ---- */
+    /* Dans la vraie vie, on le pose doucement... ou on le lance avec le pouce.
+       Le jet, lui, ne se produit qu'une fois toutes les 12 heures : sinon on
+       le jouerait a chaque fois et ca n'aurait plus rien d'exceptionnel.     */
+    function jetDisponible() {
+      try {
+        var t = localStorage.getItem(CLE_JET);
+        if (!t) return true;
+        return (Date.now() - parseInt(t, 10)) > REPOS_JET;
+      } catch (e) { return true; }
+    }
+    function marquerJet() { try { localStorage.setItem(CLE_JET, String(Date.now())); } catch (e) {} }
+
+    function mainte() { return (window.performance && performance.now) ? performance.now() : Date.now(); }
+
+    function noter(px, py) {                   // les dernieres positions du doigt
+      jetEchantillons.push({ t: mainte(), x: px, y: py });
+      if (jetEchantillons.length > 7) jetEchantillons.shift();
+    }
+
+    /* la vitesse du doigt juste avant qu'on lache : c'est elle qui distingue
+       "je le depose" (lent, velours) de "je le lance" (vif, au pouce).
+       On ne regarde que la fin du geste : les 110 derniers millisecondes. */
+    function vitesseDuLacher() {
+      var n = jetEchantillons.length;
+      if (n < 2) return 0;
+      var fin = jetEchantillons[n - 1], i = n - 1;
+      while (i > 0 && (fin.t - jetEchantillons[i - 1].t) <= 110) i--;
+      var debut = jetEchantillons[i];
+      var dt = Math.max(1, fin.t - debut.t);
+      var dx = fin.x - debut.x, dy = fin.y - debut.y;
+      var d = Math.sqrt(dx * dx + dy * dy);
+      if (d < 24) return 0;                    // un simple tremblement ne compte pas
+      return d / dt;
+    }
+
+    function sensDuJet() {                     // de quel cote il part
+      if (jetEchantillons.length < 2) return 1;
+      var a = jetEchantillons[0], b = jetEchantillons[jetEchantillons.length - 1];
+      if (Math.abs(b.x - a.x) > 8) return b.x > a.x ? 1 : -1;
+      return 1;
+    }
+
+    /* tous les minuteurs de la scene sont ranges ici : on peut tout arreter net */
+    function plusTard(f, ms) { var t = setTimeout(f, ms); minuteursScene.push(t); return t; }
+
+    function nettoyerScene() {
+      var i;
+      for (i = 0; i < minuteursScene.length; i++) clearTimeout(minuteursScene[i]);
+      minuteursScene = [];
+      root.classList.remove('ccm-face', 'ccm-tombe-d', 'ccm-tombe-g', 'ccm-releve-d', 'ccm-releve-g',
+        'ccm-hanches', 'ccm-demande', 'ccm-regard-haut', 'ccm-regard-bas', 'ccm-boude',
+        'ccm-valise-sol', 'ccm-pousse');
+      if (porte) porte.classList.remove('ccm-porte-pose', 'ouvre', 'claque');
+      reponseDonnee = false;
+    }
+
+    /* il vole encore un peu sur sa lancee, puis il tombe */
+    function voler(vers, fin) {
+      var de = x, t0v = 0, dur = 300;
+      function pas(ts) {
+        if (!t0v) t0v = ts;
+        var p = Math.min(1, (ts - t0v) / dur);
+        poser(de + (vers - de) * (1 - Math.pow(1 - p, 2)));
+        if (p < 1) raf = requestAnimationFrame(pas);
+        else { raf = null; if (fin) fin(); }
+      }
+      raf = requestAnimationFrame(pas);
+    }
+
+    function jetScene(v, sens) {
+      if (arret || occupe || saisi) return false;
+      occupe = true;
+      marquerJet();                        // la scene ne reviendra pas avant 12 h
+      if (minuteurSalut) clearTimeout(minuteurSalut);
+      if (minuteurRepos) clearTimeout(minuteurRepos);
+      if (minuteurPose) clearTimeout(minuteurPose);
+      stopper();
+      root.classList.remove('ccm-parle', 'ccm-crie', 'ccm-jette');
+      etat('');
+      root.classList.add('ccm-face');       // il retombe face a toi
+      var l = perso.offsetWidth || 110;
+      var elan = Math.min(150, Math.round(v * 120));
+      var arrivee = dansLaFenetre(x + sens * elan, 2, Math.max(2, window.innerWidth - l - 2));
+      voler(arrivee, function () { tomber(sens); });
+      return true;
+    }
+
+    /* il tombe, il reste au sol un instant, puis il se releve */
+    function tomber(sens) {
+      var l = perso.offsetWidth || 110, h = perso.offsetHeight || 155;
+      var encombrement = h * 0.8;
+      if (sens > 0 && x + l + encombrement > window.innerWidth - 2) sens = -1;
+      else if (sens < 0 && x - encombrement < 2) sens = 1;
+      root.classList.add(sens > 0 ? 'ccm-tombe-d' : 'ccm-tombe-g');
+      root.classList.add('ccm-valise-sol');            // sa valise est restee par terre
+      plusTard(function () {
+        root.classList.remove('ccm-tombe-d', 'ccm-tombe-g');
+        root.classList.add(sens > 0 ? 'ccm-releve-d' : 'ccm-releve-g');
+        plusTard(function () {
+          root.classList.remove('ccm-releve-d', 'ccm-releve-g');
+          demander();
+        }, 760);
+      }, 520);
+    }
+
+    /* debout, les poings sur les hanches : "tu veux que je parte ?" */
+    function demander() {
+      root.classList.add('ccm-hanches');
+      plusTard(function () {
+        root.classList.add('ccm-demande');
+        cadrerBulle(askEl);
+        plusTard(function () { repondre(false); }, 12000);   // il attend 12 s, puis il laisse tomber
+      }, 520);
+    }
+
+    function repondre(oui) {
+      if (reponseDonnee || arret) return;
+      if (!root.classList.contains('ccm-demande')) return;   // on ne repond qu'a la question posee
+      reponseDonnee = true;
+      root.classList.remove('ccm-demande');
+      plusTard(function () { if (oui) partir(); else bouder(); }, 240);
+    }
+
+    /* non : il se calme, il boude trois secondes, et il repart comme avant */
+    function bouder() {
+      root.classList.remove('ccm-hanches');
+      root.classList.remove('ccm-face');
+      root.classList.add('ccm-boude');
+      plusTard(function () {
+        root.classList.remove('ccm-boude', 'ccm-valise-sol');
+        occupe = false;
+        tournerVers(1);
+        etat('ccm-repos');
+        if (!dejaSalue && !arret) minuteurSalut = setTimeout(saluer, 4000);
+        repos();
+      }, 3000);
+    }
+
+    /* oui : il reprend sa valise, une porte apparait, et il s'en va */
+    function partir() {
+      root.classList.remove('ccm-hanches');
+      plusTard(function () {
+        root.classList.remove('ccm-face');         // de profil, sa valise a la main
+        root.classList.remove('ccm-valise-sol');
+        poserLaPorte();
+        plusTard(function () {
+          if (arret) return;
+          marcheVers(porteCible, 1.7, function () {
+            etat('ccm-repos');
+            plusTard(function () { ouvrirPorte(); }, 300);
+            plusTard(function () { devisager(); }, 1080);
+          });
+        }, 420);
+      }, 320);
+    }
+
+    /* la porte se pose a cote de lui, sur le sol, du cote ou il y a de la place */
+    function poserLaPorte() {
+      var l = perso.offsetWidth || 110, h = perso.offsetHeight || 155;
+      var r = perso.getBoundingClientRect();
+      var sol = Math.round(r.bottom - h * 0.078);        // la ligne de ses pieds
+      var dw = Math.max(54, Math.round(l * 0.8)), dh = Math.round(dw * 1.75);
+      var vw = window.innerWidth;
+      var dist = Math.round(l * 0.9 + dw * 0.35);
+      var aDroite = (x + l + dist + dw) < (vw - 10);
+      var aGauche = (x - dist - dw) > 10;
+      porteSens = aDroite ? 1 : (aGauche ? -1 : ((vw - x) > x ? 1 : -1));
+      var gp = porteSens > 0
+        ? Math.min(vw - 10 - dw, Math.round(x + dist))
+        : Math.max(10, Math.round(x - dist - dw));
+      if (!porte) {
+        porte = document.createElement('div');
+        porte.className = 'ccm-porte';
+        porte.innerHTML = PORTE;
+        root.appendChild(porte);
+      }
+      porte.classList.toggle('ccm-porte-mi', porteSens < 0);
+      var svgs = porte.querySelectorAll('.ccm-porte-svg'), i;
+      for (i = 0; i < svgs.length; i++) {
+        svgs[i].style.left = gp + 'px';
+        svgs[i].style.top = (sol - dh) + 'px';
+        svgs[i].style.width = dw + 'px';
+        svgs[i].style.height = dh + 'px';
+      }
+      porteCible = porteSens > 0 ? gp - Math.round(l * 0.38) : gp + dw - Math.round(l * 0.65);
+      requestAnimationFrame(function () { if (porte) porte.classList.add('ccm-porte-pose'); });
+    }
+
+    function ouvrirPorte() {
+      if (!porte || arret) return;
+      porte.classList.add('ouvre');
+      root.classList.add('ccm-pousse');                  // il pousse de la main
+      plusTard(function () { root.classList.remove('ccm-pousse'); }, 780);
+    }
+
+    /* il te devisage : les yeux montent et descendent, sans un mot */
+    function devisager() {
+      if (arret) return;
+      root.classList.add('ccm-face');
+      plusTard(function () {
+        if (arret) return;
+        root.classList.add('ccm-regard-haut');
+        plusTard(function () {
+          if (arret) return;
+          root.classList.remove('ccm-regard-haut');
+          root.classList.add('ccm-regard-bas');
+          plusTard(function () {
+            if (arret) return;
+            root.classList.remove('ccm-regard-bas');
+            root.classList.add('ccm-regard-haut');
+            plusTard(function () {
+              root.classList.remove('ccm-regard-haut');
+              entrer();
+            }, 360);
+          }, 520);
+        }, 380);
+      }, 360);
+    }
+
+    /* il entre, et il claque la porte */
+    function entrer() {
+      if (arret) return;
+      tournerVers(porteSens);
+      root.classList.remove('ccm-face');
+      plusTard(function () {
+        if (arret) return;
+        var l = perso.offsetWidth || 110;
+        marcheVers(Math.round(x + porteSens * l * 0.42), 0.85);
+        plusTard(function () { perso.style.opacity = '0'; }, 160);   // il passe la porte
+        plusTard(function () { claquer(); }, 640);
+        plusTard(function () { disparaitre(); }, 1700);
+      }, 260);
+    }
+
+    function claquer() {
+      if (!porte) return;
+      porte.classList.remove('ouvre');
+      porte.classList.add('claque');
+      plusTard(function () { if (porte) porte.classList.remove('claque'); }, 460);
+    }
+
+    /* il n'est plus la. Il faudra recharger la page pour le revoir. */
+    function disparaitre() {
+      arret = true; occupe = true; pose = true;
+      etat('');
+      if (porte) porte.classList.remove('ccm-porte-pose');
+      plusTard(function () { perso.style.display = 'none'; }, 560);
+    }
+
     /* --- interactions ------------------------------------------------- */
     function ouvrirChat() {
       root.classList.remove('ccm-parle');
@@ -762,6 +1164,7 @@
     function ranger() {
       arret = true;
       stopper();
+      nettoyerScene();
       marquerFerme();
       root.classList.remove('ccm-parle', 'ccm-ecoute');
       perso.classList.add('ccm-parti');
@@ -778,6 +1181,11 @@
     /* le clic sur la bulle ne doit pas etre avale par le personnage */
     perso.querySelector('.ccm-bulle').addEventListener('click', function (e) { e.stopPropagation(); });
 
+    /* la question du grand depart : deux reponses possibles */
+    askEl.addEventListener('click', function (e) { e.stopPropagation(); });
+    perso.querySelector('.ccm-ask-oui').addEventListener('click', function (e) { e.stopPropagation(); repondre(true); });
+    perso.querySelector('.ccm-ask-non').addEventListener('click', function (e) { e.stopPropagation(); repondre(false); });
+
     /* --- appui long : on l'attrape, il flotte (vue de face, effraye) et on
            le depose ou l'on veut dans la page. A l'atterrissage, il rale. -- */
     var saisi = false, timerAppui = null, clicJuste = false;   // (detache vit plus haut)
@@ -787,8 +1195,11 @@
 
     function saisir(px, py, idPointeur) {
       if (arret) return false;
+      nettoyerScene();                         // une scene en cours s'efface : on le tient
       arret = true;                            // fige la scene en cours : on le tient
       saisi = true; occupe = true; pose = false; compense = false;
+      jetEchantillons = [];
+      noter(px, py);
       if (minuteurSalut) clearTimeout(minuteurSalut);
       if (minuteurRepos) clearTimeout(minuteurRepos);
       if (minuteurPose)  clearTimeout(minuteurPose);
@@ -815,6 +1226,7 @@
       var l = perso.offsetWidth || 110, h = perso.offsetHeight || 155;
       var nl = dansLaFenetre(px - decX, 2, Math.max(2, window.innerWidth  - l - 2));
       var nt = dansLaFenetre(py - decY, 2, Math.max(2, window.innerHeight - h - 2));
+      noter(px, py);                           // pour mesurer la vitesse du lancer
       perso.style.left = Math.round(nl) + 'px';
       perso.style.top  = Math.round(nt) + 'px';
       x = nl;
@@ -822,12 +1234,17 @@
 
     function relacher() {
       if (!saisi) return false;
+      var v = vitesseDuLacher(), sens = sensDuJet();
       arret = false;                           // les scenes peuvent reprendre
       saisi = false; occupe = false;
       perso.classList.remove('ccm-saisi');
       root.classList.remove('ccm-flotte');
       clicJuste = true;                                        // ce clic n'ouvre pas le chat
       setTimeout(function () { clicJuste = false; }, 480);
+      /* lache d'un geste vif = un vrai jet (une fois / 12 h) ; sinon, la colere */
+      if (v >= VITESSE_JET && !reduit && !root.classList.contains('ccm-fige') && jetDisponible()) {
+        return jetScene(v, sens);
+      }
       enrager();                                           // il n'aime pas du tout etre attrape
       return true;
     }
@@ -848,6 +1265,7 @@
     perso.addEventListener('pointerdown', function (e) {
       if (arret) return;
       if (e.button && e.button !== 0) return;                  // bouton droit : on laisse passer
+      if (e.target && e.target.closest && e.target.closest('.ccm-ask,.ccm-bulle')) return;   // on repond, on ne l'attrape pas
       appuiX = e.clientX; appuiY = e.clientY; clicJuste = false;
       annulerAppui();
       timerAppui = setTimeout(function () {                    // appui long = 0,42 s
@@ -883,6 +1301,9 @@
       }
       setTimeout(function () {
         if (arret) return;
+        /* une scene a pu prendre la main entre-temps (le grand depart) :
+           on ne le fait pas marcher au milieu */
+        if (occupe) { minuteurSalut = setTimeout(saluer, delai); return; }
         etat('ccm-repos');
         marcheVers(b.min + (b.max - b.min) * 0.45);
         minuteurSalut = setTimeout(saluer, delai);
@@ -918,6 +1339,12 @@
       relacher: relacher,
       placer: placer,
       ranger: ranger,
+      /* le grand depart, jouable a la demande (bouton de demo) */
+      jet: function (force) {
+        if (force) oublierJet();
+        if (arret || occupe || saisi || !jetDisponible()) return false;
+        return jetScene(1.6, 1);
+      },
       figer: function (v) {
         root.classList.toggle('ccm-fige', v !== false);
         if (v !== false) stopper(); else repos();
@@ -952,6 +1379,8 @@
     choper: function (x, y) { return courant ? courant.choper(x, y) : false; },
     relacher: function () { return courant ? courant.relacher() : false; },
     placer: function (x, y) { return courant ? courant.placer(x, y) : false; },
+    jet: function (force) { return courant ? courant.jet(force) : false; },
+    oublierJet: oublierJet,
     monte: function () { return !!courant; }
   };
 
