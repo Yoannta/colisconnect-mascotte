@@ -70,8 +70,10 @@ Si on ne le pose pas mais qu'on le **lance** — un geste vif, relâché à tout
 il ne râle pas : il tombe, se relève, se met les poings sur les hanches et demande
 « **Tu veux que je parte ?** ».
 
-- **Oui** : une porte apparaît à côté de lui. Il reprend sa valise, marche jusqu'à la
-  porte, te jette un regard énervé de haut en bas, entre… et la claque. Il ne revient
+- **Oui** : une porte apparaît à côté de lui — vue de profil, comme lui : fermée ce
+  n'est qu'un trait vertical avec une poignée, ouverte on voit tout le panneau. Il
+  reprend sa valise, marche jusqu'à la porte, te jette un regard énervé de haut en
+  bas, entre… et la claque. Il ne revient
   qu'au rechargement de la page.
 - **Non** : il se calme, boude trois secondes, puis repart comme si de rien n'était.
 - Personne ne répond au bout de 12 secondes : il considère que c'est « non ».

@@ -21,7 +21,7 @@
 (function () {
   'use strict';
 
-  var VERSION = '2.2.0';
+  var VERSION = '2.3.0';
   var CLE_FERME = 'cc-mascotte-ferme';   // "ne plus afficher" (30 jours)
   var JOURS     = 30;
   var CLE_JET   = 'cc-mascotte-jet';     // la scene du jet : une seule fois / 12 h
@@ -200,11 +200,15 @@
           '<rect class="ccm-casquette-bande" x="42" y="34" width="40" height="4.5" rx="2.2"/>',
           '<path class="ccm-casquette-visiere" d="M80,35.5 L97,40 Q92,44.5 78,42 Z"/>',
           '<ellipse class="ccm-joue" cx="57" cy="48" rx="3.6" ry="2.3"/>',
-          '<path class="ccm-sourcil" d="M66,34.5 q4.5,-2 8.5,0.4"/>',
+          '<path class="ccm-sourcil ccmf-sourire-p" d="M66,34.5 q4.5,-2 8.5,0.4"/>',
+          /* le sourcil qui descend vers l'avant : la tete renfrognee */
+          '<path class="ccm-sourcil ccmf-fache-p" d="M65.6,32.4 q5.6,1.2 8.9,3.3"/>',
           '<ellipse class="ccm-oeil" cx="70" cy="41.5" rx="2.7" ry="3.1"/>',
           '<circle class="ccm-pupille" cx="71" cy="40.4" r="1"/>',
           '<rect class="ccm-paupiere" x="66.6" y="37.6" width="6.8" height="7.4" rx="1"/>',
-          '<path class="ccm-bouche" d="M66,49.5 q5,4.4 10,-1.2"/>',
+          '<path class="ccm-bouche ccmf-sourire-p" d="M66,49.5 q5,4.4 10,-1.2"/>',
+          /* la bouche d'enerve : un coin qui tombe, pas un sourire de souris */
+          '<path class="ccm-bouche ccmf-fache-p" d="M65.4,50.6 q5.4,-4.4 10.6,1.9"/>',
         '</g>',
 
         /* petites fumees de colere : invisibles d'habitude */
@@ -255,23 +259,26 @@
     '</div>'
   ].join('');
 
-  /* la porte : elle n'apparait que s'il decide de partir.
-     Deux morceaux exprès : le fond (le trou sombre + l'encadrement) reste
-     DERRIERE le personnage, le battant passe DEVANT lui (c'est lui qui claque).
-     Le battant s'ouvre en s'ecrasant vers la charniere (droite), comme une
-     porte qui pivote : on voit le trou sombre a la place du panneau. */
+  /* la porte, vue de PROFIL (comme lui). Fermee, ce n'est qu'un trait vertical
+     avec une poignee ; quand il l'ouvre, tout le panneau pivote vers
+     l'interieur (la charniere est a gauche, le bord libre part a droite).
+     Deux morceaux exprès : le fond (le montant) reste DERRIERE le personnage,
+     le battant passe DEVANT lui (c'est lui qui claque). */
   var PORTE = [
     '<div class="ccm-porte" aria-hidden="true">',
       '<svg class="ccm-porte-svg ccm-porte-fond" viewBox="0 0 96 168" xmlns="http://www.w3.org/2000/svg" focusable="false">',
-        '<rect class="ccm-porte-trou" x="8" y="7" width="80" height="156" rx="3"/>',
-        '<rect class="ccm-porte-cadre" x="8" y="7" width="80" height="156" rx="3"/>',
+        '<rect class="ccm-porte-cadre" x="1" y="4" width="7" height="160" rx="3.2"/>',
+        '<rect class="ccm-porte-trou" x="8" y="6" width="4" height="158" rx="2"/>',
       '</svg>',
       '<svg class="ccm-porte-svg ccm-porte-battant-svg" viewBox="0 0 96 168" xmlns="http://www.w3.org/2000/svg" focusable="false">',
         '<g class="ccm-porte-battant">',
-          '<rect class="ccm-porte-bois" x="8" y="7" width="80" height="156" rx="3"/>',
+          '<rect class="ccm-porte-bois" x="8" y="6" width="80" height="158" rx="2"/>',
           '<rect class="ccm-porte-creux" x="16" y="16" width="64" height="52" rx="2"/>',
           '<rect class="ccm-porte-creux" x="16" y="78" width="64" height="74" rx="2"/>',
-          '<circle class="ccm-porte-bouton" cx="78" cy="88" r="4.2"/>',
+        '</g>',
+        '<g class="ccm-porte-poignee">',
+          '<rect class="ccm-porte-barre" x="72" y="86.5" width="14" height="3.2" rx="1.6"/>',
+          '<circle class="ccm-porte-bouton" cx="78" cy="88" r="3.6"/>',
         '</g>',
       '</svg>',
     '</div>'
@@ -527,7 +534,23 @@
     '.ccm-perso.ccm-bulle-bas .ccm-ask{top:calc(100% - 6px);bottom:auto;transform:translate(-50%,-8px) scale(.92)}',
     '.ccm-root.ccm-demande .ccm-perso.ccm-bulle-bas .ccm-ask{transform:translate(-50%,0) scale(1)}',
     '.ccm-perso.ccm-bulle-bas .ccm-ask:after{top:-7px;bottom:auto;transform:translateX(-50%) rotate(225deg)}',
-    /* la porte : le fond reste derriere lui, le battant passe devant */
+    /* la tete renfrognee : la meme colere que les poings sur les hanches, mais
+       sans le rouge ni les tremblements. En profil, le sourcil descend vers
+       l'avant et le coin de la bouche tombe (sinon il sourit comme une souris). */
+    '.ccm-svg .ccmf-sourire-p,.ccm-svg .ccmf-fache-p{transition:opacity .2s ease}',
+    '.ccm-svg .ccmf-fache-p{opacity:0}',
+    '.ccm-root.ccm-fronce .ccmf-sourire-p{opacity:0}',
+    '.ccm-root.ccm-fronce .ccmf-fache-p{opacity:1}',
+    '.ccm-root.ccm-fronce .ccmf-crainte{opacity:0}',
+    '.ccm-root.ccm-fronce .ccmf-fache{opacity:1}',
+    '.ccm-root.ccm-fronce .ccmf-bouche-fache{opacity:1}',
+    '.ccm-root.ccm-fronce .ccmf-bouche-ronde,.ccm-root.ccm-fronce .ccmf-bouche-fond{opacity:0}',
+    '.ccm-root.ccm-fronce .ccmf-goutte,.ccm-root.ccm-fronce .ccmf-arc{display:none}',
+    /* de face, il ne leve plus le bras "au secours" : il te devisage, la valise a la main */
+    '.ccm-root.ccm-fronce .ccmf-bras-d{opacity:0}',
+    /* la porte, vue de PROFIL (comme lui). Fermee, ce n'est qu'un trait avec une
+       poignee ; quand il l'ouvre, tout le panneau pivote vers l'interieur.
+       Le fond (le montant) reste derriere lui, le battant passe devant. */
     '.ccm-porte-svg{position:fixed;display:block;opacity:0;transform:translateY(6px) scale(.72);',
       'transform-origin:50% 100%;transition:opacity .3s ease,transform .32s cubic-bezier(.2,1.1,.4,1)}',
     '.ccm-porte.ccm-porte-pose .ccm-porte-svg{opacity:1;transform:none}',
@@ -535,21 +558,28 @@
     '.ccm-porte-mi.ccm-porte-pose .ccm-porte-svg{transform:scaleX(-1)}',
     '.ccm-porte-fond{z-index:-1}',
     '.ccm-porte-battant-svg{z-index:1}',
-    '.ccm-porte-trou{fill:#101b1f}',
-    '.ccm-porte-cadre{fill:none;stroke:#5d6b73;stroke-width:6}',
+    '.ccm-porte-trou{fill:#0d1519}',
+    '.ccm-porte-cadre{fill:#63727b}',
     '.ccm-porte-bois{fill:#12826e}',
     '.ccm-porte-creux{fill:#0c5b4d}',
+    '.ccm-porte-barre{fill:#cbd6da}',
     '.ccm-porte-bouton{fill:#f0c04a}',
-    '.ccm-porte-battant{transform-box:fill-box;transform-origin:100% 50%;',
-      'transition:transform .46s cubic-bezier(.35,0,.2,1)}',
-    '.ccm-porte.ouvre .ccm-porte-battant{transform:scaleX(.07)}',
+    /* le panneau pivote sur sa charniere (le montant, a gauche) */
+    '.ccm-porte-battant{transform-box:fill-box;transform-origin:0% 50%;',
+      'transform:scaleX(.05);transition:transform .5s cubic-bezier(.34,0,.22,1)}',
+    '.ccm-porte.ouvre .ccm-porte-battant{transform:scaleX(1)}',
+    /* la poignee suit le bord libre : sur le trait quand c'est ferme */
+    '.ccm-porte-poignee{transform:translateX(-68px);transition:transform .5s cubic-bezier(.34,0,.22,1)}',
+    '.ccm-porte.ouvre .ccm-porte-poignee{transform:translateX(0)}',
     '.ccm-porte.claque .ccm-porte-battant{animation:ccmClaque .34s cubic-bezier(.2,.9,.3,1)}',
+    '.ccm-porte.claque .ccm-porte-poignee{animation:ccmClaqueP .34s cubic-bezier(.2,.9,.3,1)}',
     '.ccm-porte.claque .ccm-porte-fond{animation:ccmSecoue .34s ease-out}',
     /* il pousse la porte de la main */
     '.ccm-root.ccm-pousse .ccm-bras-av{animation:ccmPousse .7s ease-in-out}',
     '@keyframes ccmReleveD{0%{transform:rotate(78deg)}46%{transform:rotate(-11deg)}70%{transform:rotate(6deg)}100%{transform:rotate(0)}}',
     '@keyframes ccmReleveG{0%{transform:rotate(-78deg)}46%{transform:rotate(11deg)}70%{transform:rotate(-6deg)}100%{transform:rotate(0)}}',
-    '@keyframes ccmClaque{0%{transform:scaleX(.07)}72%{transform:scaleX(1.04)}100%{transform:scaleX(1)}}',
+    '@keyframes ccmClaque{0%{transform:scaleX(1)}68%{transform:scaleX(.026)}100%{transform:scaleX(.05)}}',
+    '@keyframes ccmClaqueP{0%{transform:translateX(0)}68%{transform:translateX(-70.4px)}100%{transform:translateX(-68px)}}',
     '@keyframes ccmSecoue{0%,100%{transform:translate(0,0)}25%{transform:translate(2.5px,0)}60%{transform:translate(-1.6px,0)}}',
     '@keyframes ccmPousse{0%{transform:rotate(0)}30%{transform:rotate(-72deg)}62%{transform:rotate(-64deg)}100%{transform:rotate(0)}}',
     '@keyframes ccmBoudeBras{0%{transform:rotate(2deg)}100%{transform:rotate(-3.5deg)}}',
@@ -954,7 +984,7 @@
       for (i = 0; i < minuteursScene.length; i++) clearTimeout(minuteursScene[i]);
       minuteursScene = [];
       root.classList.remove('ccm-face', 'ccm-tombe-d', 'ccm-tombe-g', 'ccm-releve-d', 'ccm-releve-g',
-        'ccm-hanches', 'ccm-demande', 'ccm-regard-haut', 'ccm-regard-bas', 'ccm-boude',
+        'ccm-hanches', 'ccm-fronce', 'ccm-demande', 'ccm-regard-haut', 'ccm-regard-bas', 'ccm-boude',
         'ccm-valise-sol', 'ccm-pousse');
       if (porte) porte.classList.remove('ccm-porte-pose', 'ouvre', 'claque');
       reponseDonnee = false;
@@ -1011,7 +1041,7 @@
 
     /* debout, les poings sur les hanches : "tu veux que je parte ?" */
     function demander() {
-      root.classList.add('ccm-hanches');
+      root.classList.add('ccm-hanches', 'ccm-fronce');
       plusTard(function () {
         root.classList.add('ccm-demande');
         cadrerBulle(askEl);
@@ -1029,7 +1059,7 @@
 
     /* non : il se calme, il boude trois secondes, et il repart comme avant */
     function bouder() {
-      root.classList.remove('ccm-hanches');
+      root.classList.remove('ccm-hanches', 'ccm-fronce');
       root.classList.remove('ccm-face');
       root.classList.add('ccm-boude');
       plusTard(function () {
@@ -1067,7 +1097,7 @@
       var sol = Math.round(r.bottom - h * 0.078);        // la ligne de ses pieds
       var dw = Math.max(54, Math.round(l * 0.8)), dh = Math.round(dw * 1.75);
       var vw = window.innerWidth;
-      var dist = Math.round(l * 0.9 + dw * 0.35);
+      var dist = Math.round(l * 1.3 + dw * 0.4);
       var aDroite = (x + l + dist + dw) < (vw - 10);
       var aGauche = (x - dist - dw) > 10;
       porteSens = aDroite ? 1 : (aGauche ? -1 : ((vw - x) > x ? 1 : -1));
@@ -1088,7 +1118,11 @@
         svgs[i].style.width = dw + 'px';
         svgs[i].style.height = dh + 'px';
       }
-      porteCible = porteSens > 0 ? gp - Math.round(l * 0.38) : gp + dw - Math.round(l * 0.65);
+      /* le trait de la porte fermee : il doit rester devant lui, a petite distance */
+      var trait = dw * (10 / 96);
+      porteCible = porteSens > 0
+        ? Math.round(gp + trait - l * 0.95 - 20)
+        : Math.round(gp + dw - trait + l * 0.073 + 20);
       requestAnimationFrame(function () { if (porte) porte.classList.add('ccm-porte-pose'); });
     }
 
