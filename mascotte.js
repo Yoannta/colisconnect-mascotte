@@ -16,11 +16,12 @@
      });
 
    API : CCMascotte.mount(opts) | CCMascotte.relancer() | CCMascotte.ranger()
+         CCMascotte.enrager() | CCMascotte.poser()
    ========================================================================== */
 (function () {
   'use strict';
 
-  var VERSION   = '1.0.0';
+  var VERSION   = '2.0.0';
   var CLE_FERME = 'cc-mascotte-ferme';   // "ne plus afficher" (30 jours)
   var JOURS     = 30;
 
@@ -34,8 +35,9 @@
         /* ombre au sol : le pose par terre */
         '<ellipse class="ccm-ombre" cx="54" cy="145" rx="32" ry="4.2"/>',
 
-        /* valise tiree, derriere lui */
-        '<g class="ccm-valise">',
+        /* valise tiree, derriere lui.
+           L'ancre sert a l'immobiliser au sol quand il part la rechercher. */
+        '<g class="ccm-valise-ancre"><g class="ccm-valise">',
           '<rect class="ccm-valise-poignee" x="30" y="88" width="5" height="14" rx="2.5"/>',
           '<rect class="ccm-valise-barre"   x="22" y="84" width="20" height="6" rx="3"/>',
           '<rect class="ccm-valise-caisse"  x="12" y="100" width="28" height="38" rx="7"/>',
@@ -43,7 +45,7 @@
           '<rect class="ccm-valise-loquer"  x="21" y="115" width="9" height="4" rx="2"/>',
           '<circle class="ccm-valise-roue" cx="19" cy="140" r="3.6"/>',
           '<circle class="ccm-valise-roue" cx="33" cy="140" r="3.6"/>',
-        '</g>',
+        '</g></g>',
 
         /* bras arriere : il tient la valise */
         '<g transform="rotate(25 52 68)"><g class="ccm-bras ccm-bras-ar">',
@@ -93,6 +95,11 @@
           '<path class="ccm-bouche" d="M66,49.5 q5,4.4 10,-1.2"/>',
         '</g>',
 
+        /* petites fumees de colere : invisibles d'habitude */
+        '<g class="ccm-vapeur">',
+          '<circle cx="28" cy="30" r="3.6"/><circle cx="19" cy="23" r="3"/><circle cx="11" cy="31" r="2.5"/>',
+        '</g>',
+
         /* bras avant : c'est lui qui salue */
         '<g class="ccm-bras ccm-bras-av">',
           '<rect class="ccm-manche" x="66" y="70" width="8" height="26" rx="4"/>',
@@ -111,6 +118,27 @@
       '<button class="ccm-bulle-ouvrir" type="button">Discuter avec moi</button>',
     '</div>'
   ].join('');
+
+  /* bulle de colere : une etoile qui crache des symboles, jamais de vrais mots */
+  var COLERE = [
+    '<div class="ccm-colere" role="status">',
+      '<svg class="ccm-colere-fond" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">',
+        '<path class="ccm-colere-etoile" d="' + etoile(50, 50, 50, 33, 13) + '"/>',
+      '</svg>',
+      '<span class="ccm-colere-txt">&amp;@#%*! &sect;%?&amp;! #@*!&amp;%</span>',
+    '</div>'
+  ].join('');
+
+  /* dessine une etoile : sert de fond a la bulle de colere */
+  function etoile(cx, cy, rExterne, rInterne, pointes) {
+    var sommets = [], total = pointes * 2, i, angle, rayon;
+    for (i = 0; i < total; i++) {
+      angle = (Math.PI * 2 * i / total) - Math.PI / 2;
+      rayon = (i % 2 === 0) ? rExterne : rInterne;
+      sommets.push((cx + rayon * Math.cos(angle)).toFixed(1) + ',' + (cy + rayon * Math.sin(angle)).toFixed(1));
+    }
+    return 'M' + sommets.join(' L') + ' Z';
+  }
 
   /* ---------------------------------------------------------------- style -- */
   var CSS = [
@@ -205,6 +233,39 @@
       'opacity:.5;font-size:17px;line-height:1;cursor:pointer;padding:4px}',
     '.ccm-bulle-fermer:hover{opacity:1}',
 
+    /* --- colere : il rougit, il fume, il jette sa valise --- */
+    '.ccm-svg .ccm-tete .ccm-peau,.ccm-svg .ccm-tete .ccm-oreille{transition:fill .25s ease}',
+    '.ccm-svg .ccm-vapeur{opacity:0;transition:opacity .3s ease;transform-box:fill-box;transform-origin:50% 100%}',
+    '.ccm-svg .ccm-vapeur circle{fill:#ff9c86}',
+    '.ccm-root.ccm-enerve .ccm-tete .ccm-peau{fill:#e2564a}',
+    '.ccm-root.ccm-enerve .ccm-tete .ccm-oreille{fill:#d9453a}',
+    '.ccm-root.ccm-enerve .ccm-joue{fill:#d1604f;opacity:.8}',
+    '.ccm-root.ccm-enerve .ccm-sourcil{stroke:#7d1a12}',
+    '.ccm-root.ccm-enerve .ccm-bouche{stroke:#8d1f16;stroke-width:2.6}',
+    '.ccm-root.ccm-enerve .ccm-tete{animation:ccmFurie .46s ease-in-out infinite}',
+    '.ccm-root.ccm-enerve .ccm-body{animation:ccmTremble .13s linear infinite}',
+    '.ccm-root.ccm-enerve .ccm-vapeur{opacity:.95;animation:ccmVapeur 1.3s ease-in-out infinite}',
+    '.ccm-root.ccm-jette .ccm-valise,.ccm-root.ccm-reprise .ccm-valise{transform-origin:50% 55%}',
+    '.ccm-root.ccm-jette .ccm-valise{animation:ccmJet 1.15s cubic-bezier(.25,.1,.55,1) forwards}',
+    '.ccm-root.ccm-jette .ccm-bras-av{animation:ccmLance 1.15s ease-out}',
+    '.ccm-root.ccm-jette .ccm-bras-ar{animation:ccmLanceAr .9s ease-out}',
+    '.ccm-root.ccm-jette .ccm-sac{animation:ccmSacSecoue .9s ease-out}',
+    '.ccm-root.ccm-reprise .ccm-valise{animation:ccmReprend .48s ease-out forwards}',
+    '.ccm-colere{position:absolute;left:50%;bottom:calc(100% - 2px);transform:translate(-50%,10px) scale(.88);',
+      'opacity:0;pointer-events:none;padding:15px 22px;width:max-content;max-width:min(78vw,300px);',
+      'transition:opacity .22s ease,transform .22s ease;z-index:3}',
+    '.ccm-root.ccm-crie .ccm-colere{opacity:1;transform:translate(-50%,0) scale(1)}',
+    '.ccm-colere-fond{position:absolute;left:0;top:0;width:100%;height:100%;display:block}',
+    '.ccm-colere-etoile{fill:#2b0f0c;stroke:#ff5f49;stroke-width:2.5;stroke-linejoin:round;vector-effect:non-scaling-stroke}',
+    '.ccm-colere-txt{position:relative;display:block;font:800 15px/1.15 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;',
+      'color:#ff9c86;letter-spacing:.6px;white-space:nowrap;text-align:center}',
+    /* --- il reflechit un instant --- */
+    '.ccm-root.ccm-reflechit .ccm-tete{animation:ccmReflechit 2.6s ease-in-out}',
+    '.ccm-root.ccm-reflechit .ccm-body{animation:ccmRespire 3.2s ease-in-out infinite}',
+    /* --- il s'est pose dans son coin : il vit au ralenti --- */
+    '.ccm-root.ccm-pose .ccm-body{animation:ccmRespire 4.4s ease-in-out infinite}',
+    '.ccm-root.ccm-pose .ccm-tete{animation:ccmBalance 7.5s ease-in-out infinite}',
+
     /* petits ecrans */
     '@media (max-width:620px){.ccm-root{height:152px}.ccm-perso{width:88px;height:124px;bottom:6px}}',
     '@media (max-width:620px){.ccm-bulle{font-size:13px;max-width:70vw}}',
@@ -227,6 +288,20 @@
       '40%{transform:rotate(-128deg)}52%{transform:rotate(-106deg)}64%{transform:rotate(-128deg)}',
       '80%{transform:rotate(-132deg)}100%{transform:rotate(-8deg)}}',
     '@keyframes ccmEcoute{0%,100%{transform:rotate(0)}45%{transform:rotate(-6deg)}75%{transform:rotate(2deg)}}',
+    '@keyframes ccmFurie{0%,100%{transform:rotate(-3.5deg)}50%{transform:rotate(3.5deg)}}',
+    '@keyframes ccmTremble{0%,100%{transform:translate(0,0)}25%{transform:translate(-.9px,0)}75%{transform:translate(.9px,0)}}',
+    '@keyframes ccmVapeur{0%{transform:translate(0,0) scale(.6);opacity:.5}55%{opacity:.95}100%{transform:translate(4px,-12px) scale(1.2);opacity:0}}',
+    '@keyframes ccmJet{0%{transform:translate(0,0) rotate(0)}14%{transform:translate(-9px,-13px) rotate(-18deg)}',
+      '34%{transform:translate(74px,-66px) rotate(170deg)}56%{transform:translate(142px,-24px) rotate(302deg)}',
+      '74%{transform:translate(170px,-2px) rotate(396deg)}84%{transform:translate(170px,-15px) rotate(436deg)}',
+      '93%{transform:translate(170px,0) rotate(452deg)}100%{transform:translate(170px,0) rotate(450deg)}}',
+    '@keyframes ccmLance{0%{transform:rotate(0)}12%{transform:rotate(54deg)}26%{transform:rotate(-104deg)}',
+      '42%{transform:rotate(-118deg)}70%{transform:rotate(-58deg)}100%{transform:rotate(0)}}',
+    '@keyframes ccmLanceAr{0%{transform:rotate(0)}14%{transform:rotate(36deg)}30%{transform:rotate(-70deg)}',
+      '60%{transform:rotate(-36deg)}100%{transform:rotate(0)}}',
+    '@keyframes ccmSacSecoue{0%{transform:rotate(0)}18%{transform:rotate(-9deg)}34%{transform:rotate(7deg)}52%{transform:rotate(-5deg)}100%{transform:rotate(0)}}',
+    '@keyframes ccmReprend{0%{transform:translate(170px,0) rotate(450deg)}100%{transform:translate(0,0) rotate(360deg)}}',
+    '@keyframes ccmReflechit{0%{transform:rotate(0)}18%{transform:rotate(9deg)}58%{transform:rotate(9deg)}84%{transform:rotate(2deg)}100%{transform:rotate(0)}}',
     '@keyframes ccmCligne{0%,92%,100%{transform:scaleY(0)}94.5%,96.5%{transform:scaleY(1)}}'
   ].join('');
 
@@ -277,7 +352,9 @@
     perso.setAttribute('role', 'button');
     perso.setAttribute('tabindex', '0');
     perso.setAttribute('aria-label', 'Le petit voyageur ColisConnect : demander de l\u2019aide');
-    perso.innerHTML = SVG + BULLE;
+    perso.innerHTML = SVG + BULLE + COLERE;
+    ancre = perso.querySelector('.ccm-valise-ancre');
+    colere = perso.querySelector('.ccm-colere');
 
     root.appendChild(perso);
     document.body.appendChild(root);
@@ -288,7 +365,7 @@
     bulleTxt.textContent = texte;
 
     /* --- etats -------------------------------------------------------- */
-    var ETATS = ['ccm-marche', 'ccm-repos', 'ccm-regarde', 'ccm-salue', 'ccm-parle', 'ccm-ecoute'];
+    var ETATS = ['ccm-marche','ccm-repos','ccm-regarde','ccm-reflechit','ccm-salue','ccm-parle','ccm-ecoute','ccm-pose'];
     function etat(c) {
       root.classList.remove.apply(root.classList, ETATS);
       if (c) root.classList.add(c);
@@ -297,6 +374,10 @@
     /* --- deplacement -------------------------------------------------- */
     var x = 0, largeur = 110, marge = 14, cible = 0, depart = 0, t0 = 0, duree = 0, raf = null, enMarche = false;
     var arret = false;                       // l'automate reprend la main
+    var occupe = false;                      // une scene est en cours (salut, colere...)
+    var pose   = false;                      // il s'est pose dans son coin : fini de marcher
+    var minuteurRepos = null, minuteurPose = null;
+    var ancre, colere, compense = false, xRef = 0;
 
     function bornes() {
       largeur = perso.offsetWidth || 110;
@@ -305,17 +386,51 @@
     }
     function poser(v) { x = v; perso.style.left = Math.round(v) + 'px'; }
 
+    /* quand il part rechercher sa valise, elle doit rester posee au sol :
+       on compense son deplacement a l'ecran, en tenant compte du miroir. */
+    function majAncre() {
+      if (!ancre) return;
+      var l = largeur || 110;
+      var facteur = perso.classList.contains('ccm-vers-gauche') ? 1 : -1;
+      ancre.style.transform = 'translateX(' + (facteur * (x - xRef) * (110 / l)).toFixed(2) + 'px)';
+    }
+
+    /* une bulle large ne doit jamais sortir de l'ecran */
+    function cadrerBulle(el) {
+      if (!el) return;
+      var vw = window.innerWidth, g = 8, w = el.offsetWidth;
+      if (!w) return;
+      var gauche = x + (perso.offsetWidth || 110) / 2 - w / 2;
+      var dx = 0;
+      if (gauche < g) dx = g - gauche;
+      else if (gauche + w > vw - g) dx = (vw - g) - (gauche + w);
+      el.style.marginLeft = dx ? Math.round(dx) + 'px' : '';
+    }
+
+    /* il la ramasse : elle revient doucement dans sa main */
+    function lacherAncre() {
+      compense = false;
+      if (!ancre) return;
+      ancre.style.transition = 'transform .48s ease-out';
+      ancre.style.transform = 'translateX(0px)';
+      setTimeout(function () {
+        if (!ancre) return;
+        ancre.style.transition = '';
+        ancre.style.transform = '';
+      }, 520);
+    }
+
     function tournerVers(sens) {              // sens 1 = droite, -1 = gauche
       if (sens < 0) perso.classList.add('ccm-vers-gauche');
       else perso.classList.remove('ccm-vers-gauche');
     }
 
-    function marcheVers(cible2) {
+    function marcheVers(cible2, rapidite) {
       var b = bornes();
       cible = Math.min(b.max, Math.max(b.min, cible2));
       var sens = cible > x ? 1 : -1;
       tournerVers(sens);
-      depart = x; t0 = 0; duree = Math.max(360, Math.abs(cible - x) / vitesse * 1000);
+      depart = x; t0 = 0; duree = Math.max(360, Math.abs(cible - x) / (vitesse * (rapidite || 1)) * 1000);
       enMarche = true;
       etat('ccm-marche');
       raf = requestAnimationFrame(avance);
@@ -326,6 +441,7 @@
       if (!t0) t0 = ts;
       var p = Math.min(1, (ts - t0) / duree);
       poser(depart + (cible - depart) * p);
+      if (compense) majAncre();
       if (p < 1) raf = requestAnimationFrame(avance);
       else { enMarche = false; etat('ccm-repos'); repos(); }
     }
@@ -334,29 +450,52 @@
       enMarche = false;
       if (raf) cancelAnimationFrame(raf);
       raf = null;
+      if (compense) {
+        compense = false;
+        if (ancre) { ancre.style.transition = ''; ancre.style.transform = ''; }
+      }
       etat('ccm-repos');
     }
 
+    function libre() { return !arret && !occupe && !pose; }
+
+    /* un vrai personnage fait parfois... rien. C'est ce qui le rend vivant. */
     function repos() {
-      if (arret) return;
-      setTimeout(function () {
-        if (arret) return;
-        var b = bornes();
-        if (Math.random() < 0.34) regarde();
-        marcheVers(b.min + Math.random() * (b.max - b.min));
-      }, 1300 + Math.random() * 2400);
+      if (!libre()) return;
+      if (minuteurRepos) clearTimeout(minuteurRepos);
+      minuteurRepos = setTimeout(function () {
+        if (!libre()) return;
+        var b = bornes(), r = Math.random();
+        if (r < 0.22) regarde();                                    // il regarde autour de lui
+        else if (r < 0.36) reflechit();                             // il reflechit un instant
+        else marcheVers(b.min + Math.random() * (b.max - b.min));    // il repart
+      }, 900 + Math.random() * 4200);
     }
 
     function regarde() {
       etat('ccm-regarde');
-      setTimeout(function () { if (!arret) etat('ccm-repos'); }, 1900);
+      setTimeout(function () {
+        if (!libre()) return;
+        etat('ccm-repos');
+        repos();
+      }, 1900);
+    }
+
+    function reflechit() {
+      etat('ccm-reflechit');
+      setTimeout(function () {
+        if (!libre()) return;
+        etat('ccm-repos');
+        repos();
+      }, 2600);
     }
 
     /* --- le grand moment : il remarque le visiteur -------------------- */
     var dejaSalue = false;
     function saluer() {
-      if (dejaSalue || arret) return;
-      dejaSalue = true;
+      if (arret || dejaSalue) return;
+      if (occupe) { minuteurSalut = setTimeout(saluer, 6000); return; }   // occupe : on reprend plus tard
+      dejaSalue = true; occupe = true;
       stopper();
       setTimeout(function () {
         etat('ccm-regarde');
@@ -365,14 +504,94 @@
           setTimeout(function () {
             if (arret) return;
             root.classList.add('ccm-parle');
+            cadrerBulle(perso.querySelector('.ccm-bulle'));
             setTimeout(function () {
               if (arret) return;
               root.classList.remove('ccm-parle');
+              occupe = false;
               repos();
+              /* il vit encore un peu, puis il va se poser dans son coin */
+              minuteurPose = setTimeout(sePoser, 45000);
             }, 17000);
           }, 1000);
         }, 1200);
       }, 420);
+    }
+
+    /* --- la grosse colere : il jette sa valise ------------------------ */
+    function dureeVers(c) { return Math.max(360, Math.abs(c - x) / vitesse * 1000); }
+
+    function finColere() {
+      root.classList.remove('ccm-enerve', 'ccm-crie');
+      occupe = false;
+      etat('ccm-repos');
+      if (!dejaSalue && !arret) minuteurSalut = setTimeout(saluer, 4000);
+      repos();
+    }
+
+    function enrager() {
+      if (arret || occupe || pose) return false;
+      occupe = true;
+      if (minuteurSalut) clearTimeout(minuteurSalut);
+      if (minuteurRepos) clearTimeout(minuteurRepos);
+      if (minuteurPose) clearTimeout(minuteurPose);
+      stopper();
+      root.classList.remove('ccm-parle');
+
+      var b = bornes();
+      var sens = (x < (b.min + b.max) / 2) ? 1 : -1;      // il se tourne vers le plus grand espace
+      tournerVers(sens);
+      var dist = Math.round(170 * ((perso.offsetWidth || 110) / 110));
+      var atterrit = Math.min(b.max, Math.max(b.min, x + sens * dist));
+      var dMarche = dureeVers(atterrit);
+      var immobile = reduit || root.classList.contains('ccm-fige');   // mode calme : pas de jet
+
+      etat('ccm-enerve');
+      setTimeout(function () {
+        if (arret) return;
+        if (!immobile) root.classList.add('ccm-jette');               // il lance la valise
+        setTimeout(function () {
+          if (arret) return;
+          root.classList.add('ccm-crie');
+          cadrerBulle(colere);                             // la bulle "@&%#*!"
+          setTimeout(function () {
+            if (arret) return;
+            root.classList.remove('ccm-crie');
+            if (immobile) { finColere(); return; }
+            etat('ccm-repos');
+            xRef = x; compense = true;
+            if (ancre) ancre.style.transition = 'none';
+            marcheVers(atterrit);                                    // il va la rechercher
+            setTimeout(function () {
+              if (arret) return;
+              lacherAncre();
+              root.classList.add('ccm-reprise');                      // il la ramasse
+              setTimeout(function () {
+                if (arret) return;
+                root.classList.remove('ccm-reprise', 'ccm-jette');
+                finColere();
+              }, 500);
+            }, dMarche + 320);
+          }, 2700);
+        }, immobile ? 300 : 1150);
+      }, 650);
+      return true;
+    }
+
+    /* --- apres un moment, il va se poser dans son coin ---------------- */
+    function sePoser() {
+      if (arret || occupe || pose) return;
+      pose = true;
+      var b = bornes();
+      if (Math.abs(x - b.min) < 12) { stopper(); etat('ccm-pose'); return; }
+      var d = dureeVers(b.min) / 2;      // il presse le pas pour rejoindre son coin
+      etat('ccm-repos');
+      marcheVers(b.min, 2);
+      setTimeout(function () {
+        if (arret) return;
+        stopper();
+        etat('ccm-pose');
+      }, d + 320);
     }
 
     /* --- interactions ------------------------------------------------- */
@@ -445,13 +664,17 @@
     return {
       racine: root,
       saluer: saluer,
+      enrager: enrager,
+      poser: sePoser,
       ranger: ranger,
       figer: function (v) {
         root.classList.toggle('ccm-fige', v !== false);
         if (v !== false) stopper(); else repos();
       },
-      detruire: function () { arret = true; stopper(); if (obs) obs.disconnect();
+      detruire: function () { arret = true; occupe = true; stopper(); if (obs) obs.disconnect();
         if (minuteurSalut) clearTimeout(minuteurSalut);
+        if (minuteurRepos) clearTimeout(minuteurRepos);
+        if (minuteurPose) clearTimeout(minuteurPose);
         if (root.parentNode) root.parentNode.removeChild(root); }
     };
   }
@@ -473,6 +696,8 @@
       return courant;
     },
     ranger: function () { if (courant) courant.ranger(); },
+    enrager: function () { return courant ? courant.enrager() : false; },
+    poser: function () { if (courant) courant.poser(); },
     monte: function () { return !!courant; }
   };
 

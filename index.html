@@ -97,6 +97,9 @@
       <li>Il ne bloque rien : on peut cliquer partout ailleurs, même sur son passage.</li>
       <li>Le petit <b>×</b> de sa bulle : il repart et ne revient plus.</li>
       <li>Mode calme : il reste immobile mais garde la parole.</li>
+      <li>Les temps morts : parfois il ne fait rien pendant plusieurs secondes, puis il repart.</li>
+      <li>Le bouton <b>colère</b> : il rougit, fume, jette sa valise — puis il va la rechercher.</li>
+      <li>Et au bout d'un moment, il va se poser dans son coin et reste tranquille.</li>
       <li>Sur téléphone : il est plus petit, la bulle reste lisible.</li>
     </ul>
   </div>
@@ -108,6 +111,8 @@
       <button class="dem" id="b-revient">Il revient (oublié)</button>
       <button class="dem" id="b-anim" aria-pressed="false">Moins d'animation</button>
       <button class="dem" id="b-calme" aria-pressed="false">Mode calme</button>
+      <button class="dem" id="b-colere">Le faire enrager</button>
+      <button class="dem" id="b-pose">Il se pose au coin</button>
       <button class="dem" id="b-chat">Ouvrir le chat (démo)</button>
     </div>
     <p class="etat" id="etat">Animations : <b id="v-anim">normales</b> · Mode calme : <b id="v-calme">non</b></p>
@@ -127,7 +132,7 @@
   </div>
 </div>
 
-<script src="mascotte.js"></script>
+<script src="mascotte.js?v=6"></script>
 <script>
 (function () {
   var chat = document.getElementById('chat');
@@ -198,6 +203,18 @@
 
   document.getElementById('b-revient').onclick = function () {
     window.CCMascotte.relancer({ salutation: 'Bonjour ! 👋 Besoin d\u2019un coup de main ?', onChat: ouvrir, delai: 900, calme: moins });
+  };
+
+  /* l'action du bouton colere : si une scene est en cours, on repart a zero */
+  document.getElementById('b-colere').onclick = function () {
+    if (window.CCMascotte.enrager()) return;
+    window.CCMascotte.relancer({ salutation: 'Bonjour ! 👋 Besoin d\u2019un coup de main ?', onChat: ouvrir, delai: 60000, calme: moins });
+    setTimeout(function () { window.CCMascotte.enrager(); }, 1300);
+  };
+
+  document.getElementById('b-pose').onclick = function () {
+    window.CCMascotte.relancer({ salutation: 'Bonjour ! 👋 Besoin d\u2019un coup de main ?', onChat: ouvrir, delai: 60000, calme: moins });
+    setTimeout(function () { window.CCMascotte.poser(); }, 1500);
   };
 
   document.getElementById('b-chat').onclick = ouvrir;
