@@ -71,6 +71,14 @@
   }
   .chat-pied input:focus{border-color:var(--primary)}
   .chat-pied button{background:var(--primary);color:#04201c;border:0;border-radius:999px;padding:10px 16px;font:700 14px inherit;cursor:pointer}
+  /* la video de lancement */
+  .video-boite{display:flex;justify-content:center;margin:0 0 12px}
+  video.promo{
+    width:auto;height:auto;max-width:100%;max-height:72vh;display:block;
+    border:1px solid var(--line);border-radius:14px;background:#000;
+  }
+  a.dem{text-decoration:none;display:inline-flex;align-items:center;gap:8px}
+  a.dem:hover{background:rgba(19,236,200,.16)}
   footer{max-width:860px;margin:26px auto 0;padding:0 22px;color:var(--muted);font-size:13px}
 </style>
 </head>
@@ -120,6 +128,24 @@
       <button class="dem" id="b-chat">Ouvrir le chat (démo)</button>
     </div>
     <p class="etat" id="etat">Animations : <b id="v-anim">normales</b> · Mode calme : <b id="v-calme">non</b></p>
+  </div>
+
+  <div class="carte" id="video">
+    <h2>La vidéo de lancement</h2>
+    <div class="video-boite">
+      <video class="promo" id="video-promo" controls playsinline preload="metadata"
+             poster="brag.jpg" width="1080" height="1920"
+             aria-label="Vidéo de lancement : Le petit voyageur, la mascotte de ColisConnect">
+        <source src="brag.mp4" type="video/mp4">
+        Votre navigateur ne lit pas la vidéo.
+        <a href="brag.mp4" download>La télécharger (5 Mo)</a>.
+      </video>
+    </div>
+    <div class="rangee">
+      <a class="dem" href="brag.mp4" download="le-petit-voyageur.mp4">Télécharger la vidéo (5 Mo)</a>
+      <a class="dem" href="brag.jpg" download="le-petit-voyageur.jpg">Télécharger l'image</a>
+    </div>
+    <p class="etat">20 secondes, format vertical, avec le son. Le personnage est dessiné en code : 0 image, ~70 ko.</p>
   </div>
 </main>
 
